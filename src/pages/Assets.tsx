@@ -1,0 +1,591 @@
+import { useState } from 'react'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts'
+import { Header } from '@/components/layout/Header'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import { useAssetStore } from '@/store/assetStore'
+import { formatCurrency } from '@/utils/formatters'
+import type { AssetAccount, AssetType, LiabilityType } from '@/types'
+import clsx from 'clsx'
+
+// ───── 자산/부채 유형 목록 ─────
+const ASSET_TYPES: AssetType[] = ['현금/예금', '투자', '부동산', '연금/보험', '기타자산']
+const LIABILITY_TYPES: LiabilityType[] = ['대출', '카드할부', '전세보증금', '기타부채']
+
+const ASSET_TYPE_META: Record<AssetType, { icon: string; color: string; bgColor: string }> = {
+  '현금/예금': { icon: '🏦', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/20' },
+  투자: { icon: '📈', color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-50 dark:bg-green-900/20' },
+  부동산: { icon: '🏠', color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-900/20' },
+  '연금/보험': { icon: '🛡️', color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-900/20' },
+  기타자산: { icon: '💼', color: 'text-gray-600 dark:text-gray-400', bgColor: 'bg-gray-50 dark:bg-gray-700/30' },
+}
+
+const LIABILITY_TYPE_META: Record<LiabilityType, { icon: string; color: string; bgColor: string }> = {
+  대출: { icon: '🏛️', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-50 dark:bg-red-900/20' },
+  카드할부: { icon: '💳', color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-900/20' },
+  전세보증금: { icon: '🔑', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-900/20' },
+  기타부채: { icon: '📋', color: 'text-gray-600 dark:text-gray-400', bgColor: 'bg-gray-50 dark:bg-gray-700/30' },
+}
+
+// ───── 금액 포맷 입력 ─────
+function formatAmountInput(value: string): string {
+  const num = value.replace(/[^0-9]/g, '')
+  if (!num) return ''
+  return Number(num).toLocaleString('ko-KR')
+}
+
+// ───── 자산/부채 추가·수정 모달 ─────
+interface AccountFormData {
+  name: string
+  isLiability: boolean
+  type: AssetType | LiabilityType
+  amountStr: string
+  memo: string
+}
+
+interface AccountModalProps {
+  initial?: AssetAccount
+  onClose: () => void
+}
+
+function AccountModal({ initial, onClose }: AccountModalProps) {
+  const { addAccount, updateAccount } = useAssetStore()
+  const [form, setForm] = useState<AccountFormData>({
+    name: initial?.name ?? '',
+    isLiability: initial?.isLiability ?? false,
+    type: initial?.type ?? '현금/예금',
+    amountStr: initial ? initial.amount.toLocaleString('ko-KR') : '',
+    memo: initial?.memo ?? '',
+  })
+  const [error, setError] = useState('')
+
+  const handleTabChange = (isLiability: boolean) => {
+    setForm((f) => ({
+      ...f,
+      isLiability,
+      type: isLiability ? '대출' : '현금/예금',
+    }))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.name.trim()) { setError('이름을 입력해주세요'); return }
+    const amount = parseInt(form.amountStr.replace(/[^0-9]/g, '')) || 0
+    if (amount <= 0) { setError('금액을 입력해주세요'); return }
+
+    if (initial) {
+      updateAccount(initial.id, {
+        name: form.name.trim(),
+        isLiability: form.isLiability,
+        type: form.type,
+        amount,
+        memo: form.memo.trim(),
+      })
+    } else {
+      addAccount({
+        name: form.name.trim(),
+        isLiability: form.isLiability,
+        type: form.type,
+        amount,
+        memo: form.memo.trim(),
+      })
+    }
+    onClose()
+  }
+
+  const types = form.isLiability ? LIABILITY_TYPES : ASSET_TYPES
+
+  return (
+    <form onSubmit={handleSubmit} className="p-5 space-y-4">
+      {/* 자산 / 부채 탭 */}
+      <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600">
+        <button
+          type="button"
+          onClick={() => handleTabChange(false)}
+          className={clsx(
+            'flex-1 py-2.5 text-sm font-medium transition-colors',
+            !form.isLiability
+              ? 'bg-blue-600 text-white'
+              : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+          )}
+        >
+          자산
+        </button>
+        <button
+          type="button"
+          onClick={() => handleTabChange(true)}
+          className={clsx(
+            'flex-1 py-2.5 text-sm font-medium transition-colors',
+            form.isLiability
+              ? 'bg-red-600 text-white'
+              : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+          )}
+        >
+          부채
+        </button>
+      </div>
+
+      {/* 유형 선택 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">유형</label>
+        <div className="grid grid-cols-2 gap-2">
+          {types.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, type: t }))}
+              className={clsx(
+                'px-3 py-2 rounded-xl text-sm font-medium border transition-all',
+                form.type === t
+                  ? form.isLiability
+                    ? 'bg-red-50 dark:bg-red-900/30 border-red-400 dark:border-red-500 text-red-700 dark:text-red-300'
+                    : 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-500 text-blue-700 dark:text-blue-300'
+                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 이름 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">이름</label>
+        <input
+          type="text"
+          value={form.name}
+          onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); setError('') }}
+          placeholder={form.isLiability ? '예: 주택담보대출, 신용카드' : '예: 국민은행 통장, 삼성전자 주식'}
+          maxLength={30}
+          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          autoFocus
+        />
+      </div>
+
+      {/* 금액 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">
+          {form.isLiability ? '잔여 부채 금액' : '현재 평가액'}
+        </label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₩</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.amountStr}
+            onChange={(e) => { setForm((f) => ({ ...f, amountStr: formatAmountInput(e.target.value) })); setError('') }}
+            placeholder="0"
+            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
+      {/* 메모 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">메모 (선택)</label>
+        <input
+          type="text"
+          value={form.memo}
+          onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
+          placeholder="메모를 입력하세요"
+          maxLength={100}
+          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <div className="flex gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        >
+          취소
+        </button>
+        <button
+          type="submit"
+          className={clsx(
+            'flex-1 py-2.5 rounded-xl text-sm font-medium text-white transition-colors',
+            form.isLiability ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'
+          )}
+        >
+          {initial ? '수정' : '추가'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ───── 계좌 항목 행 ─────
+interface AccountRowProps {
+  account: AssetAccount
+  onEdit: () => void
+  onDelete: () => void
+}
+
+function AccountRow({ account, onEdit, onDelete }: AccountRowProps) {
+  const meta = account.isLiability
+    ? LIABILITY_TYPE_META[account.type as LiabilityType]
+    : ASSET_TYPE_META[account.type as AssetType]
+
+  return (
+    <div className="flex items-center gap-3 py-3 px-1 group">
+      <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0', meta.bgColor)}>
+        {meta.icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{account.name}</p>
+        {account.memo && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{account.memo}</p>
+        )}
+      </div>
+      <span className={clsx(
+        'text-sm font-semibold flex-shrink-0',
+        account.isLiability ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
+      )}>
+        {account.isLiability ? '-' : ''}{formatCurrency(account.amount)}
+      </span>
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <button
+          onClick={onEdit}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+          title="수정"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </button>
+        <button
+          onClick={onDelete}
+          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+          title="삭제"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ───── 유형별 섹션 ─────
+interface TypeSectionProps {
+  title: string
+  icon: string
+  bgColor: string
+  accounts: AssetAccount[]
+  onEdit: (a: AssetAccount) => void
+  onDelete: (id: string) => void
+}
+
+function TypeSection({ title, icon, bgColor, accounts, onEdit, onDelete }: TypeSectionProps) {
+  if (accounts.length === 0) return null
+  const total = accounts.reduce((s, a) => s + a.amount, 0)
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className={clsx('w-6 h-6 rounded-lg flex items-center justify-center text-sm', bgColor)}>
+            {icon}
+          </span>
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</span>
+        </div>
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{formatCurrency(total)}</span>
+      </div>
+      <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+        {accounts.map((a) => (
+          <AccountRow
+            key={a.id}
+            account={a}
+            onEdit={() => onEdit(a)}
+            onDelete={() => {
+              if (confirm(`'${a.name}'을 삭제할까요?`)) onDelete(a.id)
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ───── 메인 페이지 ─────
+export function Assets() {
+  const { accounts, snapshots, getTotalAssets, getTotalLiabilities, getNetWorth, deleteAccount } =
+    useAssetStore()
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<AssetAccount | undefined>()
+
+  const totalAssets = getTotalAssets()
+  const totalLiabilities = getTotalLiabilities()
+  const netWorth = getNetWorth()
+
+  // 최근 6개월 스냅샷 (라인 차트용)
+  const chartData = snapshots
+    .slice(-6)
+    .map((s) => ({
+      month: s.yearMonth.slice(5) + '월',
+      순자산: s.netWorth,
+    }))
+
+  // 자산 목록 (유형별 그룹)
+  const assetAccounts = accounts.filter((a) => !a.isLiability)
+  const liabilityAccounts = accounts.filter((a) => a.isLiability)
+
+  const openAdd = (isLiability = false) => {
+    setEditTarget(
+      isLiability
+        ? ({ isLiability: true } as AssetAccount)
+        : undefined
+    )
+    setModalOpen(true)
+  }
+
+  const openEdit = (a: AssetAccount) => {
+    setEditTarget(a)
+    setModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setModalOpen(false)
+    setEditTarget(undefined)
+  }
+
+  return (
+    <div className="space-y-5">
+      <Header
+        title="자산 관리"
+        subtitle="나의 순자산 현황"
+        action={
+          <Button size="sm" onClick={() => openAdd(false)}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            자산 추가
+          </Button>
+        }
+      />
+
+      {/* ── 섹션 1: 순자산 요약 ── */}
+      <div className="grid grid-cols-3 gap-3">
+        <SummaryCard
+          label="총 자산"
+          amount={totalAssets}
+          colorClass="text-blue-600 dark:text-blue-400"
+          bgClass="bg-blue-50 dark:bg-blue-900/20"
+          icon="🏦"
+        />
+        <SummaryCard
+          label="총 부채"
+          amount={totalLiabilities}
+          colorClass="text-red-600 dark:text-red-400"
+          bgClass="bg-red-50 dark:bg-red-900/20"
+          icon="💳"
+        />
+        <SummaryCard
+          label="순자산"
+          amount={netWorth}
+          colorClass={netWorth >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}
+          bgClass={netWorth >= 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}
+          icon="✨"
+        />
+      </div>
+
+      {/* 순자산 추이 차트 */}
+      {chartData.length > 1 && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">순자산 추이</h3>
+          <ResponsiveContainer width="100%" height={160}>
+            <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+              <YAxis
+                tick={{ fontSize: 11 }}
+                tickFormatter={(v: number) =>
+                  v >= 100000000
+                    ? `${(v / 100000000).toFixed(1)}억`
+                    : v >= 10000
+                    ? `${(v / 10000).toFixed(0)}만`
+                    : String(v)
+                }
+              />
+              <Tooltip
+                formatter={(v: number) => [formatCurrency(v), '순자산']}
+                contentStyle={{
+                  backgroundColor: 'var(--tooltip-bg, #fff)',
+                  borderRadius: '12px',
+                  border: '1px solid #e5e7eb',
+                  fontSize: '12px',
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="순자산"
+                stroke="#3b82f6"
+                strokeWidth={2.5}
+                dot={{ r: 4, fill: '#3b82f6' }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* ── 섹션 2: 자산 목록 ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">자산</h3>
+          <button
+            onClick={() => openAdd(false)}
+            className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            자산 추가
+          </button>
+        </div>
+
+        {assetAccounts.length === 0 ? (
+          <EmptyState message="등록된 자산이 없습니다" onAdd={() => openAdd(false)} />
+        ) : (
+          <div className="space-y-4">
+            {ASSET_TYPES.map((type) => {
+              const grouped = assetAccounts.filter((a) => a.type === type)
+              const meta = ASSET_TYPE_META[type]
+              return (
+                <TypeSection
+                  key={type}
+                  title={type}
+                  icon={meta.icon}
+                  bgColor={meta.bgColor}
+                  accounts={grouped}
+                  onEdit={openEdit}
+                  onDelete={deleteAccount}
+                />
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── 섹션 3: 부채 목록 ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">부채</h3>
+          <button
+            onClick={() => openAdd(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            부채 추가
+          </button>
+        </div>
+
+        {liabilityAccounts.length === 0 ? (
+          <EmptyState message="등록된 부채가 없습니다" onAdd={() => openAdd(true)} isLiability />
+        ) : (
+          <div className="space-y-4">
+            {LIABILITY_TYPES.map((type) => {
+              const grouped = liabilityAccounts.filter((a) => a.type === type)
+              const meta = LIABILITY_TYPE_META[type]
+              return (
+                <TypeSection
+                  key={type}
+                  title={type}
+                  icon={meta.icon}
+                  bgColor={meta.bgColor}
+                  accounts={grouped}
+                  onEdit={openEdit}
+                  onDelete={deleteAccount}
+                />
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 모달 */}
+      <Modal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        title={
+          editTarget?.id
+            ? editTarget.isLiability ? '부채 수정' : '자산 수정'
+            : editTarget?.isLiability ? '부채 추가' : '자산 추가'
+        }
+      >
+        <AccountModal
+          initial={editTarget?.id ? editTarget : undefined}
+          onClose={closeModal}
+        />
+      </Modal>
+    </div>
+  )
+}
+
+// ───── 요약 카드 ─────
+interface SummaryCardProps {
+  label: string
+  amount: number
+  colorClass: string
+  bgClass: string
+  icon: string
+}
+
+function SummaryCard({ label, amount, colorClass, bgClass, icon }: SummaryCardProps) {
+  return (
+    <div className={clsx('rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700', bgClass)}>
+      <div className="flex items-center gap-1.5 mb-2">
+        <span className="text-base">{icon}</span>
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+      </div>
+      <p className={clsx('text-base font-bold leading-tight', colorClass)}>
+        {formatCurrency(Math.abs(amount))}
+      </p>
+    </div>
+  )
+}
+
+// ───── 빈 상태 ─────
+function EmptyState({
+  message,
+  onAdd,
+  isLiability = false,
+}: {
+  message: string
+  onAdd: () => void
+  isLiability?: boolean
+}) {
+  return (
+    <div className="flex flex-col items-center py-8 gap-3">
+      <p className="text-sm text-gray-400 dark:text-gray-500">{message}</p>
+      <button
+        onClick={onAdd}
+        className={clsx(
+          'flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+          isLiability
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40'
+            : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+        )}
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        {isLiability ? '부채 추가하기' : '자산 추가하기'}
+      </button>
+    </div>
+  )
+}
