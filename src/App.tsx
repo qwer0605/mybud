@@ -9,7 +9,7 @@ import { Settings } from '@/pages/Settings'
 
 export function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AppLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
