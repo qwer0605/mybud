@@ -1,20 +1,37 @@
 import { create } from 'zustand'
 import { v4 as uuidv4 } from 'uuid'
-import type { MonthlyBudget, BudgetFormData, ExpenseMainCategory } from '@/types'
+import type { MonthlyBudget, BudgetFormData } from '@/types'
 import {
-  EXPENSE_MAIN_CATEGORIES,
   getProfileStorageKey,
   getActiveProfileId,
 } from '@/utils/constants'
 import { getCurrentYearMonth } from '@/utils/formatters'
 import { sampleBudgets } from '@/utils/sampleData'
+import { isFirebaseConfigured } from '@/firebase/config'
+import { upsertDocument, deleteDocument } from '@/firebase/syncService'
+import { getCurrentUser } from '@/store/authStore'
+
+// ───── Firestore 동기화 헬퍼 ─────
+function fireSync(profileId: string, id: string, data: Record<string, unknown>): void {
+  if (!isFirebaseConfigured) return
+  const user = getCurrentUser()
+  if (!user) return
+  upsertDocument(user.uid, profileId, 'budgets', id, data).catch(() => {})
+}
+
+function fireDelete(profileId: string, id: string): void {
+  if (!isFirebaseConfigured) return
+  const user = getCurrentUser()
+  if (!user) return
+  deleteDocument(user.uid, profileId, 'budgets', id).catch(() => {})
+}
 
 // ───── 마이그레이션 ─────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function migrateBudgets(raw: any[]): MonthlyBudget[] {
   return raw.map((b) => ({
     ...b,
-    categoryBudgets: (b.categoryBudgets ?? []).map((cb: any) => ({
+    categoryBudgets: (b.categoryBudgets ?? []).map((cb: { mainCategory?: string; category?: string; amount: number }) => ({
       mainCategory: cb.mainCategory ?? cb.category ?? '기타',
       amount: cb.amount,
     })),
@@ -39,9 +56,7 @@ function loadFromStorage(profileId?: string, seedIfEmpty = true): MonthlyBudget[
       }
       return migrated
     }
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
   if (seedIfEmpty) {
     localStorage.setItem(key, JSON.stringify(sampleBudgets))
     return sampleBudgets
@@ -64,18 +79,23 @@ interface BudgetState {
 
   getBudgetByYearMonth: (yearMonth: string) => MonthlyBudget | undefined
   getCurrentMonthBudget: () => MonthlyBudget | undefined
-  getCategoryBudget: (yearMonth: string, mainCategory: ExpenseMainCategory) => number
+  getCategoryBudget: (yearMonth: string, mainCategory: string) => number
 
-  /** 프로필 전환 시 데이터 재로드 */
   reloadForProfile: (profileId: string) => void
 }
 
 export const useBudgetStore = create<BudgetState>((set, get) => {
-  // 프로필 전환 이벤트 구독
   if (typeof window !== 'undefined') {
+    // 프로필 전환 이벤트
     window.addEventListener('profile-switch', (e) => {
       const { profileId } = (e as CustomEvent).detail
       get().reloadForProfile(profileId)
+    })
+    // Firestore 다운로드 완료 이벤트
+    window.addEventListener('firestore-data-loaded', () => {
+      const pid = getActiveProfileId()
+      const budgets = loadFromStorage(pid, false)
+      set({ budgets })
     })
   }
 
@@ -83,6 +103,7 @@ export const useBudgetStore = create<BudgetState>((set, get) => {
     budgets: loadFromStorage(),
 
     setBudget: (yearMonth, data) => {
+      const pid = getActiveProfileId()
       const existing = get().getBudgetByYearMonth(yearMonth)
       const now = new Date().toISOString()
 
@@ -94,19 +115,20 @@ export const useBudgetStore = create<BudgetState>((set, get) => {
         }))
 
       let budgets: MonthlyBudget[]
+      let targetBudget: MonthlyBudget
+
       if (existing) {
+        targetBudget = {
+          ...existing,
+          totalBudget: parseInt(data.totalBudget.replace(/[^0-9]/g, '')) || 0,
+          categoryBudgets,
+          updatedAt: now,
+        }
         budgets = get().budgets.map((b) =>
-          b.yearMonth === yearMonth
-            ? {
-                ...b,
-                totalBudget: parseInt(data.totalBudget.replace(/[^0-9]/g, '')) || 0,
-                categoryBudgets,
-                updatedAt: now,
-              }
-            : b
+          b.yearMonth === yearMonth ? targetBudget : b
         )
       } else {
-        const newBudget: MonthlyBudget = {
+        targetBudget = {
           id: uuidv4(),
           yearMonth,
           totalBudget: parseInt(data.totalBudget.replace(/[^0-9]/g, '')) || 0,
@@ -114,17 +136,21 @@ export const useBudgetStore = create<BudgetState>((set, get) => {
           createdAt: now,
           updatedAt: now,
         }
-        budgets = [newBudget, ...get().budgets]
+        budgets = [targetBudget, ...get().budgets]
       }
 
-      saveToStorage(budgets)
+      saveToStorage(budgets, pid)
       set({ budgets })
+      fireSync(pid, targetBudget.id, targetBudget as unknown as Record<string, unknown>)
     },
 
     deleteBudget: (yearMonth) => {
+      const pid = getActiveProfileId()
+      const target = get().getBudgetByYearMonth(yearMonth)
       const budgets = get().budgets.filter((b) => b.yearMonth !== yearMonth)
-      saveToStorage(budgets)
+      saveToStorage(budgets, pid)
       set({ budgets })
+      if (target) fireDelete(pid, target.id)
     },
 
     getBudgetByYearMonth: (yearMonth) => {
@@ -149,11 +175,14 @@ export const useBudgetStore = create<BudgetState>((set, get) => {
   }
 })
 
-// 기본 예산 폼 데이터 생성 헬퍼
-export function createDefaultBudgetFormData(existing?: MonthlyBudget): BudgetFormData {
+// 기본 예산 폼 데이터 생성 헬퍼 (동적 카테고리 지원)
+export function createDefaultBudgetFormData(
+  expenseCategories: string[],
+  existing?: MonthlyBudget
+): BudgetFormData {
   return {
     totalBudget: existing ? String(existing.totalBudget) : '',
-    categoryBudgets: EXPENSE_MAIN_CATEGORIES.map((mainCategory) => {
+    categoryBudgets: expenseCategories.map((mainCategory) => {
       const found = existing?.categoryBudgets.find((cb) => cb.mainCategory === mainCategory)
       return {
         mainCategory,

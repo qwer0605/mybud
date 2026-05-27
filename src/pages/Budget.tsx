@@ -8,6 +8,7 @@ import { BudgetForm } from '@/components/budget/BudgetForm'
 import { BudgetProgressCard } from '@/components/budget/BudgetProgressCard'
 import { useBudgetStore, createDefaultBudgetFormData } from '@/store/budgetStore'
 import { useBudgetProgress } from '@/hooks/useBudgetProgress'
+import { useCategoryStore } from '@/store/categoryStore'
 import { getCurrentYearMonth, formatCurrency, formatYearMonth } from '@/utils/formatters'
 import clsx from 'clsx'
 
@@ -15,6 +16,8 @@ export function Budget() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedYearMonth, setSelectedYearMonth] = useState(getCurrentYearMonth())
   const { setBudget, deleteBudget, getBudgetByYearMonth } = useBudgetStore()
+  const { expenseTree } = useCategoryStore()
+  const expenseCategories = Object.keys(expenseTree)
   const existing = getBudgetByYearMonth(selectedYearMonth)
   const {
     totalBudget,
@@ -208,7 +211,7 @@ export function Budget() {
       {/* 예산 설정 모달 */}
       <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title="예산 설정" size="lg">
         <BudgetForm
-          initial={createDefaultBudgetFormData(existing)}
+          initial={createDefaultBudgetFormData(expenseCategories, existing)}
           yearMonth={selectedYearMonth}
           onSubmit={(data) => {
             setBudget(selectedYearMonth, data)

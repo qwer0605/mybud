@@ -2,15 +2,16 @@
  * Firestore 동기화 서비스
  *
  * 동기화 전략:
- * - 로그인 시: Firestore → localStorage 풀 다운로드 (덮어쓰기)
- * - 데이터 변경 시: localStorage 저장 후 Firestore에도 즉시 upsert
- * - 오프라인 시: localStorage에만 저장 (단순 모드)
+ * - 로그인 시: Firestore → localStorage 풀 다운로드 → 스토어 재로드
+ * - 데이터 변경 시: localStorage 저장 후 Firestore에도 즉시 upsert (fire-and-forget)
+ * - 오프라인 시: localStorage에만 저장 (Firestore 오류 무시)
  *
  * Firestore 경로:
  *   users/{uid}/profiles/{profileId}/transactions/{id}
  *   users/{uid}/profiles/{profileId}/budgets/{id}
  *   users/{uid}/profiles/{profileId}/assets/{id}
- *   users/{uid}/profileList  (프로필 목록 문서)
+ *   users/{uid}/profileList/data
+ *   users/{uid}/settings/categories
  */
 
 import {
@@ -19,12 +20,14 @@ import {
   setDoc,
   deleteDoc,
   getDocs,
+  getDoc,
   writeBatch,
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from './config'
 import { getProfileStorageKey } from '@/utils/constants'
 import type { Transaction, MonthlyBudget, AssetAccount } from '@/types'
 import type { Profile } from '@/store/profileStore'
+import type { CategoryStoreData } from '@/store/categoryStore'
 
 type SyncType = 'transactions' | 'budgets' | 'assets'
 
@@ -37,6 +40,11 @@ function profileDataCol(uid: string, profileId: string, type: SyncType) {
 function profileListDoc(uid: string) {
   if (!db) throw new Error('Firestore not initialized')
   return doc(db, 'users', uid, 'profileList', 'data')
+}
+
+function categoriesDoc(uid: string) {
+  if (!db) throw new Error('Firestore not initialized')
+  return doc(db, 'users', uid, 'settings', 'categories')
 }
 
 // ───── 단일 문서 upsert (fire-and-forget용) ─────
@@ -72,7 +80,7 @@ export async function deleteDocument(
   }
 }
 
-// ───── 프로필 목록 동기화 ─────
+// ───── 프로필 목록 업로드 ─────
 export async function syncProfileList(uid: string, profiles: Profile[]): Promise<void> {
   if (!isFirebaseConfigured || !db) return
   try {
@@ -82,9 +90,53 @@ export async function syncProfileList(uid: string, profiles: Profile[]): Promise
   }
 }
 
-// ───── 로그인 시: Firestore → localStorage 다운로드 ─────
-export async function downloadFromFirestore(uid: string, profiles: Profile[]): Promise<void> {
+// ───── 프로필 목록 다운로드 ─────
+export async function downloadProfileList(uid: string): Promise<Profile[] | null> {
+  if (!isFirebaseConfigured || !db) return null
+  try {
+    const snap = await getDoc(profileListDoc(uid))
+    if (snap.exists()) {
+      const data = snap.data() as { profiles: Profile[] }
+      return data.profiles ?? null
+    }
+  } catch (err) {
+    console.warn('[Sync] downloadProfileList error:', err)
+  }
+  return null
+}
+
+// ───── 카테고리 업로드 ─────
+export async function upsertCategories(uid: string, data: CategoryStoreData): Promise<void> {
   if (!isFirebaseConfigured || !db) return
+  try {
+    await setDoc(categoriesDoc(uid), { ...data, updatedAt: new Date().toISOString() })
+  } catch (err) {
+    console.warn('[Sync] upsertCategories error:', err)
+  }
+}
+
+// ───── 카테고리 다운로드 ─────
+export async function downloadCategories(uid: string): Promise<CategoryStoreData | null> {
+  if (!isFirebaseConfigured || !db) return null
+  try {
+    const snap = await getDoc(categoriesDoc(uid))
+    if (snap.exists()) {
+      const data = snap.data() as CategoryStoreData & { updatedAt?: string }
+      // updatedAt 필드 제거 후 반환
+      const { updatedAt: _u, ...rest } = data as typeof data & { updatedAt?: string }
+      void _u
+      return rest as CategoryStoreData
+    }
+  } catch (err) {
+    console.warn('[Sync] downloadCategories error:', err)
+  }
+  return null
+}
+
+// ───── 로그인 시: Firestore → localStorage 다운로드 ─────
+export async function downloadFromFirestore(uid: string, profiles: Profile[]): Promise<boolean> {
+  if (!isFirebaseConfigured || !db) return false
+  let hasData = false
   try {
     for (const profile of profiles) {
       // transactions
@@ -92,10 +144,8 @@ export async function downloadFromFirestore(uid: string, profiles: Profile[]): P
       const txData: Transaction[] = []
       txSnap.forEach((d) => txData.push(d.data() as Transaction))
       if (txData.length > 0) {
-        localStorage.setItem(
-          getProfileStorageKey(profile.id, 'transactions'),
-          JSON.stringify(txData)
-        )
+        localStorage.setItem(getProfileStorageKey(profile.id, 'transactions'), JSON.stringify(txData))
+        hasData = true
       }
 
       // budgets
@@ -103,10 +153,8 @@ export async function downloadFromFirestore(uid: string, profiles: Profile[]): P
       const bdData: MonthlyBudget[] = []
       bdSnap.forEach((d) => bdData.push(d.data() as MonthlyBudget))
       if (bdData.length > 0) {
-        localStorage.setItem(
-          getProfileStorageKey(profile.id, 'budgets'),
-          JSON.stringify(bdData)
-        )
+        localStorage.setItem(getProfileStorageKey(profile.id, 'budgets'), JSON.stringify(bdData))
+        hasData = true
       }
 
       // assets
@@ -114,15 +162,14 @@ export async function downloadFromFirestore(uid: string, profiles: Profile[]): P
       const asData: AssetAccount[] = []
       asSnap.forEach((d) => asData.push(d.data() as AssetAccount))
       if (asData.length > 0) {
-        localStorage.setItem(
-          getProfileStorageKey(profile.id, 'assets'),
-          JSON.stringify(asData)
-        )
+        localStorage.setItem(getProfileStorageKey(profile.id, 'assets'), JSON.stringify(asData))
+        hasData = true
       }
     }
   } catch (err) {
     console.warn('[Sync] downloadFromFirestore error:', err)
   }
+  return hasData
 }
 
 // ───── 로컬 → Firestore 전체 업로드 ─────

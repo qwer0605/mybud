@@ -2,7 +2,43 @@ import { useState, useRef } from 'react'
 import { useCategoryStore } from '@/store/categoryStore'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
+import { getActiveProfileId, getProfileStorageKey, PROFILE_STORAGE_KEY } from '@/utils/constants'
 import clsx from 'clsx'
+
+// ─── 데이터 내보내기 ─────────────────────────────────────────
+function exportData() {
+  try {
+    const profileId = getActiveProfileId()
+    const transactions = JSON.parse(localStorage.getItem(getProfileStorageKey(profileId, 'transactions')) ?? '[]')
+    const budgets = JSON.parse(localStorage.getItem(getProfileStorageKey(profileId, 'budgets')) ?? '[]')
+    const assets = JSON.parse(localStorage.getItem(getProfileStorageKey(profileId, 'assets')) ?? '[]')
+    const profiles = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) ?? '[]')
+
+    const exportPayload = {
+      exportDate: new Date().toISOString(),
+      appVersion: '1.0',
+      activeProfileId: profileId,
+      profiles,
+      transactions,
+      budgets,
+      assets,
+    }
+
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const dateStr = new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')
+    a.href = url
+    a.download = `가계부_백업_${dateStr}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    alert('내보내기 중 오류가 발생했습니다.')
+    console.error(err)
+  }
+}
 
 // ─── 아이콘 선택지 ────────────────────────────────────────────
 const ICON_OPTIONS = [
@@ -370,6 +406,37 @@ export function Settings() {
         >
           기본값으로 초기화
         </button>
+      </div>
+
+      {/* 데이터 관리 */}
+      <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">데이터 관리</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+          {/* 데이터 내보내기 */}
+          <button
+            onClick={exportData}
+            className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+          >
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">데이터 내보내기</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                현재 통장의 거래내역·예산·자산을 JSON 파일로 저장
+              </p>
+            </div>
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 px-1">
+          💡 정기적으로 백업해두면 데이터 분실을 예방할 수 있어요
+        </p>
       </div>
 
       {/* 대분류 추가/수정 모달 */}

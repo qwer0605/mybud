@@ -2,12 +2,22 @@ import { create } from 'zustand'
 import { isFirebaseConfigured, auth, googleProvider } from '@/firebase/config'
 import {
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   type User,
 } from 'firebase/auth'
-import { downloadFromFirestore, uploadToFirestore, syncProfileList } from '@/firebase/syncService'
-import { PROFILE_STORAGE_KEY } from '@/utils/constants'
+import {
+  downloadFromFirestore,
+  uploadToFirestore,
+  syncProfileList,
+  downloadProfileList,
+  downloadCategories,
+  upsertCategories,
+} from '@/firebase/syncService'
+import { PROFILE_STORAGE_KEY, CURRENT_PROFILE_KEY } from '@/utils/constants'
+import { CATEGORY_STORAGE_KEY } from '@/store/categoryStore'
 import type { Profile } from '@/store/profileStore'
 
 interface AuthUser {
@@ -37,10 +47,15 @@ function getStoredProfiles(): Profile[] {
   try {
     const raw = localStorage.getItem(PROFILE_STORAGE_KEY)
     if (raw) return JSON.parse(raw) as Profile[]
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
   return []
+}
+
+/** Firestore에서 다운로드 후 모든 스토어에 재로드 이벤트 발송 */
+function notifyStoresReload() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('firestore-data-loaded'))
+  }
 }
 
 export const useAuthStore = create<AuthState>((set) => {
@@ -54,21 +69,56 @@ export const useAuthStore = create<AuthState>((set) => {
     }
   }
 
+  // 리다이렉트 로그인 결과 처리 (iOS 등 팝업 차단 환경용)
+  getRedirectResult(auth).catch(() => {})
+
   // Firebase 설정된 경우: onAuthStateChanged 구독
   set({ isLoading: true })
   onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
       const user = toAuthUser(firebaseUser)
-      const profiles = getStoredProfiles()
-      // 로그인 시 Firestore → localStorage 다운로드
-      await downloadFromFirestore(user.uid, profiles)
-      // 프로필 목록도 동기화
+
+      // ─── 프로필 목록: Firestore 우선, 없으면 로컬 ───
+      let profiles = getStoredProfiles()
+      const cloudProfiles = await downloadProfileList(user.uid)
+      if (cloudProfiles && cloudProfiles.length > 0) {
+        // Firestore 프로필이 있으면 로컬에 덮어씀
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(cloudProfiles))
+        profiles = cloudProfiles
+      }
+
+      // ─── 카테고리: Firestore 우선, 없으면 로컬 업로드 ───
+      const cloudCategories = await downloadCategories(user.uid)
+      if (cloudCategories) {
+        localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(cloudCategories))
+      } else {
+        // 로컬 카테고리를 Firestore에 올림
+        try {
+          const localCatRaw = localStorage.getItem(CATEGORY_STORAGE_KEY)
+          if (localCatRaw) {
+            upsertCategories(user.uid, JSON.parse(localCatRaw)).catch(() => {})
+          }
+        } catch { /* ignore */ }
+      }
+
+      // ─── 거래/예산/자산: Firestore 다운로드 ───
+      const hasCloudData = await downloadFromFirestore(user.uid, profiles)
+      if (hasCloudData) {
+        // Firestore 데이터가 있으면 스토어 재로드 이벤트 발송
+        notifyStoresReload()
+      }
+
+      // 프로필 목록 Firestore 동기화
       if (profiles.length > 0) {
         syncProfileList(user.uid, profiles).catch(() => {})
       }
+
       set({ user, isLoading: false })
-      // 로컬 데이터 → Firestore 업로드 (신규 기기)
-      uploadToFirestore(user.uid, profiles).catch(() => {})
+
+      // 로컬 데이터 → Firestore 전체 업로드 (신규 기기 / 최초 로그인)
+      if (!hasCloudData) {
+        uploadToFirestore(user.uid, profiles).catch(() => {})
+      }
     } else {
       set({ user: null, isLoading: false })
     }
@@ -81,10 +131,21 @@ export const useAuthStore = create<AuthState>((set) => {
     signInWithGoogle: async () => {
       if (!auth || !googleProvider) return
       try {
+        // 팝업 방식 시도 (데스크탑/Android)
         await signInWithPopup(auth, googleProvider)
-        // onAuthStateChanged가 user 상태를 업데이트함
-      } catch (err) {
-        console.error('[Auth] Google sign-in error:', err)
+      } catch (err: unknown) {
+        const code = (err as { code?: string })?.code
+        // 팝업 차단 또는 사용자가 닫은 경우 → 리다이렉트 방식으로 폴백 (iOS Safari 등)
+        if (code === 'auth/popup-blocked' || code === 'auth/cancelled-popup-request') {
+          try {
+            await signInWithRedirect(auth, googleProvider)
+          } catch (redirectErr) {
+            console.error('[Auth] Redirect sign-in error:', redirectErr)
+          }
+        } else if (code !== 'auth/popup-closed-by-user') {
+          // 사용자가 직접 닫은 경우는 오류 아님
+          console.error('[Auth] Google sign-in error:', err)
+        }
       }
     },
 
@@ -98,3 +159,13 @@ export const useAuthStore = create<AuthState>((set) => {
     },
   }
 })
+
+/** 현재 로그인 유저 UID (스토어 외부에서 사용) */
+export function getCurrentUid(): string | null {
+  return useAuthStore.getState().user?.uid ?? null
+}
+
+/** 현재 로그인 유저 (스토어 외부에서 사용) */
+export function getCurrentUser() {
+  return useAuthStore.getState().user
+}

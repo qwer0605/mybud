@@ -8,6 +8,24 @@ import {
 } from '@/utils/constants'
 import { getCurrentYearMonth, getYearMonth } from '@/utils/formatters'
 import { sampleTransactions } from '@/utils/sampleData'
+import { isFirebaseConfigured } from '@/firebase/config'
+import { upsertDocument, deleteDocument } from '@/firebase/syncService'
+import { getCurrentUser } from '@/store/authStore'
+
+// ───── Firestore 동기화 헬퍼 ─────
+function fireSync(profileId: string, id: string, data: Record<string, unknown>): void {
+  if (!isFirebaseConfigured) return
+  const user = getCurrentUser()
+  if (!user) return
+  upsertDocument(user.uid, profileId, 'transactions', id, data).catch(() => {})
+}
+
+function fireDelete(profileId: string, id: string): void {
+  if (!isFirebaseConfigured) return
+  const user = getCurrentUser()
+  if (!user) return
+  deleteDocument(user.uid, profileId, 'transactions', id).catch(() => {})
+}
 
 // ───── 마이그레이션 ─────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,10 +38,6 @@ function migrate(raw: any[]): Transaction[] {
 }
 
 // ───── 로드/저장 ─────
-/**
- * @param seedIfEmpty true(기본): 데이터 없으면 샘플 데이터 씨딩
- *                   false: 데이터 없으면 빈 배열 반환 (초기화 후 재로드 시 사용)
- */
 function loadFromStorage(profileId?: string, seedIfEmpty = true): Transaction[] {
   const pid = profileId ?? getActiveProfileId()
   const key = getProfileStorageKey(pid, 'transactions')
@@ -35,14 +49,11 @@ function loadFromStorage(profileId?: string, seedIfEmpty = true): Transaction[] 
       if (parsed.length > 0 && !parsed[0].mainCategory) saveToStorage(migrated, pid)
       return migrated
     }
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
   if (seedIfEmpty) {
     localStorage.setItem(key, JSON.stringify(sampleTransactions))
     return sampleTransactions
   }
-  // 초기화 후 재로드: 빈 배열을 명시적으로 저장
   localStorage.setItem(key, JSON.stringify([]))
   return []
 }
@@ -68,7 +79,6 @@ interface TransactionState {
   getTransactionsByYearMonth: (yearMonth: string) => Transaction[]
   getCurrentMonthTransactions: () => Transaction[]
 
-  /** 프로필 전환 시 데이터 재로드 */
   reloadForProfile: (profileId: string) => void
 }
 
@@ -81,11 +91,17 @@ const defaultFilter: TransactionFilter = {
 }
 
 export const useTransactionStore = create<TransactionState>((set, get) => {
-  // 프로필 전환 이벤트 구독
   if (typeof window !== 'undefined') {
+    // 프로필 전환 이벤트
     window.addEventListener('profile-switch', (e) => {
       const { profileId } = (e as CustomEvent).detail
       get().reloadForProfile(profileId)
+    })
+    // Firestore 다운로드 완료 이벤트
+    window.addEventListener('firestore-data-loaded', () => {
+      const pid = getActiveProfileId()
+      const transactions = loadFromStorage(pid, false)
+      set({ transactions, filter: defaultFilter })
     })
   }
 
@@ -95,6 +111,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
     isLoading: false,
 
     addTransaction: (data) => {
+      const pid = getActiveProfileId()
       const now = new Date().toISOString()
       const newTransaction: Transaction = {
         id: uuidv4(),
@@ -108,11 +125,13 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         updatedAt: now,
       }
       const transactions = [newTransaction, ...get().transactions]
-      saveToStorage(transactions)
+      saveToStorage(transactions, pid)
       set({ transactions })
+      fireSync(pid, newTransaction.id, newTransaction as unknown as Record<string, unknown>)
     },
 
     updateTransaction: (id, data) => {
+      const pid = getActiveProfileId()
       const now = new Date().toISOString()
       const transactions = get().transactions.map((t) =>
         t.id === id
@@ -128,14 +147,18 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
             }
           : t
       )
-      saveToStorage(transactions)
+      saveToStorage(transactions, pid)
       set({ transactions })
+      const updated = transactions.find((t) => t.id === id)
+      if (updated) fireSync(pid, id, updated as unknown as Record<string, unknown>)
     },
 
     deleteTransaction: (id) => {
+      const pid = getActiveProfileId()
       const transactions = get().transactions.filter((t) => t.id !== id)
-      saveToStorage(transactions)
+      saveToStorage(transactions, pid)
       set({ transactions })
+      fireDelete(pid, id)
     },
 
     setFilter: (filter) => {
@@ -157,14 +180,12 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
     },
 
     reloadForProfile: (profileId) => {
-      // seedIfEmpty=false: 초기화 후에는 빈 배열로, 샘플 데이터 재씨딩 방지
       const transactions = loadFromStorage(profileId, false)
       set({ transactions, filter: defaultFilter })
     },
   }
 })
 
-// 레거시 호환: 구형 TRANSACTIONS 키에 데이터가 있으면 알림
 export function hasLegacyData(): boolean {
   return !!localStorage.getItem(LOCAL_STORAGE_KEYS.TRANSACTIONS)
 }
