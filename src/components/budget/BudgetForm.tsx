@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import type { BudgetFormData } from '@/types'
-import { EXPENSE_MAIN_CATEGORIES, EXPENSE_MAIN_CATEGORY_META } from '@/utils/constants'
+import { useCategoryStore } from '@/store/categoryStore'
 import { formatAmountInput } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
 import clsx from 'clsx'
@@ -13,9 +13,30 @@ interface BudgetFormProps {
 }
 
 export function BudgetForm({ initial, yearMonth, onSubmit, onCancel }: BudgetFormProps) {
+  const { expenseTree, expenseMeta } = useCategoryStore()
+  const expenseMainCats = Object.keys(expenseTree)
+
   const [totalBudget, setTotalBudget] = useState(initial.totalBudget)
-  const [categoryBudgets, setCategoryBudgets] = useState(initial.categoryBudgets)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // 현재 카테고리 목록 기준으로 categoryBudgets 초기화
+  // (저장된 것 우선, 없으면 빈 값으로 초기화)
+  const [categoryBudgets, setCategoryBudgets] = useState(() => {
+    const existingMap = new Map(initial.categoryBudgets.map((cb) => [cb.mainCategory, cb.amount]))
+    return expenseMainCats.map((cat) => ({
+      mainCategory: cat,
+      amount: existingMap.get(cat) ?? '',
+    }))
+  })
+
+  // categoryStore가 바뀌어도 새로 추가된 카테고리 반영
+  const mergedBudgets = useMemo(() => {
+    const existingMap = new Map(categoryBudgets.map((cb) => [cb.mainCategory, cb.amount]))
+    return expenseMainCats.map((cat) => ({
+      mainCategory: cat,
+      amount: existingMap.get(cat) ?? '',
+    }))
+  }, [expenseMainCats, categoryBudgets])
 
   const [year, month] = yearMonth.split('-')
 
@@ -31,7 +52,7 @@ export function BudgetForm({ initial, yearMonth, onSubmit, onCancel }: BudgetFor
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-    onSubmit({ totalBudget, categoryBudgets })
+    onSubmit({ totalBudget, categoryBudgets: mergedBudgets })
   }
 
   const updateCategoryAmount = (mainCategory: string, value: string) => {
@@ -44,7 +65,7 @@ export function BudgetForm({ initial, yearMonth, onSubmit, onCancel }: BudgetFor
     )
   }
 
-  const totalCategoryBudget = categoryBudgets.reduce(
+  const totalCategoryBudget = mergedBudgets.reduce(
     (sum, cb) => sum + (parseInt(cb.amount.replace(/[^0-9]/g, '')) || 0),
     0
   )
@@ -108,15 +129,14 @@ export function BudgetForm({ initial, yearMonth, onSubmit, onCancel }: BudgetFor
           )}
         </div>
         <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-          {EXPENSE_MAIN_CATEGORIES.map((mainCategory) => {
-            const meta = EXPENSE_MAIN_CATEGORY_META[mainCategory]
-            const cb = categoryBudgets.find((c) => c.mainCategory === mainCategory)!
+          {mergedBudgets.map(({ mainCategory, amount }) => {
+            const m = expenseMeta[mainCategory]
             return (
               <div
                 key={mainCategory}
                 className="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 dark:bg-gray-700/50"
               >
-                <span className="text-xl w-8 text-center">{meta.icon}</span>
+                <span className="text-xl w-8 text-center">{m?.icon ?? '📦'}</span>
                 <span className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">
                   {mainCategory}
                 </span>
@@ -125,7 +145,7 @@ export function BudgetForm({ initial, yearMonth, onSubmit, onCancel }: BudgetFor
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={formatAmountInput(cb?.amount ?? '')}
+                    value={formatAmountInput(amount)}
                     onChange={(e) =>
                       updateCategoryAmount(mainCategory, e.target.value.replace(/[^0-9]/g, ''))
                     }

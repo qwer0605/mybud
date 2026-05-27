@@ -143,8 +143,23 @@ export function getActiveProfileId(): string {
 }
 
 // ───── 헬퍼 함수 ─────
-/** mainCategory에 해당하는 메타 반환 (지출/수입 자동 판별) */
+/** mainCategory에 해당하는 메타 반환 (커스텀 → 기본값 순으로 탐색) */
 export function getMainCategoryMeta(mainCategory: string): CategoryMeta {
+  // 커스텀 카테고리 우선 확인 (localStorage 직접 읽기 — 리액트 외부 컨텍스트용)
+  try {
+    const raw = localStorage.getItem('budget_app_categories')
+    if (raw) {
+      const data = JSON.parse(raw) as {
+        expenseMeta?: Record<string, CategoryMeta>
+        incomeMeta?: Record<string, CategoryMeta>
+      }
+      if (data.expenseMeta?.[mainCategory]) return data.expenseMeta[mainCategory]
+      if (data.incomeMeta?.[mainCategory]) return data.incomeMeta[mainCategory]
+    }
+  } catch {
+    // localStorage 접근 실패 시 기본값으로 폴백
+  }
+  // 정적 기본값
   if (mainCategory in EXPENSE_MAIN_CATEGORY_META) {
     return EXPENSE_MAIN_CATEGORY_META[mainCategory as ExpenseMainCategory]
   }

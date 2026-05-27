@@ -88,7 +88,7 @@ export interface Transaction {
 
 // ───── 예산 ─────
 export interface BudgetItem {
-  mainCategory: ExpenseMainCategory
+  mainCategory: string   // 동적 카테고리 지원을 위해 string 사용
   amount: number
 }
 
@@ -136,7 +136,7 @@ export interface TransactionFormData {
 
 export interface BudgetFormData {
   totalBudget: string
-  categoryBudgets: { mainCategory: ExpenseMainCategory; amount: string }[]
+  categoryBudgets: { mainCategory: string; amount: string }[]
 }
 
 // ───── 필터 ─────

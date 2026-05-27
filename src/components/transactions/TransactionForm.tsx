@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { Transaction, TransactionFormData, TransactionType } from '@/types'
-import {
-  EXPENSE_CATEGORY_TREE,
-  INCOME_CATEGORY_TREE,
-  EXPENSE_MAIN_CATEGORY_META,
-  INCOME_MAIN_CATEGORY_META,
-  EXPENSE_MAIN_CATEGORIES,
-  INCOME_MAIN_CATEGORIES,
-} from '@/utils/constants'
+import { useCategoryStore } from '@/store/categoryStore'
 import { getTodayString, formatAmountInput } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
 import clsx from 'clsx'
@@ -19,40 +12,47 @@ interface TransactionFormProps {
 }
 
 export function TransactionForm({ initial, onSubmit, onCancel }: TransactionFormProps) {
+  const { expenseTree, incomeTree, expenseMeta, incomeMeta } = useCategoryStore()
+
   const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense')
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '')
-  const [mainCategory, setMainCategory] = useState<string>(
-    initial?.mainCategory ?? '식비'
-  )
-  const [subCategory, setSubCategory] = useState<string>(
-    initial?.subCategory ?? '외식'
-  )
+  const [mainCategory, setMainCategory] = useState<string>(initial?.mainCategory ?? '')
+  const [subCategory, setSubCategory] = useState<string>(initial?.subCategory ?? '')
   const [memo, setMemo] = useState(initial?.memo ?? '')
   const [date, setDate] = useState(initial?.date ?? getTodayString())
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const categoryTree = type === 'expense' ? EXPENSE_CATEGORY_TREE : INCOME_CATEGORY_TREE
-  const mainCategories = type === 'expense' ? EXPENSE_MAIN_CATEGORIES : INCOME_MAIN_CATEGORIES
-  const mainCategoryMeta =
-    type === 'expense' ? EXPENSE_MAIN_CATEGORY_META : INCOME_MAIN_CATEGORY_META
+  const categoryTree = type === 'expense' ? expenseTree : incomeTree
+  const mainCategoryMeta = type === 'expense' ? expenseMeta : incomeMeta
+  const mainCategories = Object.keys(categoryTree)
+
+  // 첫 번째 카테고리 기본값
+  const firstMain = mainCategories[0] ?? ''
+  const firstSub = firstMain ? (categoryTree[firstMain]?.[0] ?? '') : ''
 
   // 유형 변경 시 카테고리 리셋
   useEffect(() => {
     if (!initial) {
-      if (type === 'expense') {
-        setMainCategory('식비')
-        setSubCategory('외식')
-      } else {
-        setMainCategory('근로소득')
-        setSubCategory('급여')
-      }
+      const tree = type === 'expense' ? expenseTree : incomeTree
+      const cats = Object.keys(tree)
+      const first = cats[0] ?? ''
+      setMainCategory(first)
+      setSubCategory(tree[first]?.[0] ?? '')
     }
-  }, [type, initial])
+  }, [type, initial, expenseTree, incomeTree])
+
+  // 초기 대분류가 없으면 첫 번째로 설정
+  useEffect(() => {
+    if (!initial && !mainCategory && firstMain) {
+      setMainCategory(firstMain)
+      setSubCategory(firstSub)
+    }
+  }, [firstMain, firstSub, mainCategory, initial])
 
   // 대분류 변경 시 소분류 첫 번째로 리셋
   const handleMainCategoryChange = (main: string) => {
     setMainCategory(main)
-    const subs = (categoryTree as Record<string, string[]>)[main] ?? []
+    const subs = categoryTree[main] ?? []
     setSubCategory(subs[0] ?? '')
   }
 
@@ -74,8 +74,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
     onSubmit({ type, amount, mainCategory, subCategory, memo, date })
   }
 
-  const currentSubCategories =
-    (categoryTree as Record<string, string[]>)[mainCategory] ?? []
+  const currentSubCategories = categoryTree[mainCategory] ?? []
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -129,32 +128,34 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
       </div>
 
       {/* 대분류 선택 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          대분류
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {mainCategories.map((cat) => {
-            const meta = (mainCategoryMeta as Record<string, { icon: string }>)[cat]
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => handleMainCategoryChange(cat)}
-                className={clsx(
-                  'flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
-                  mainCategory === cat
-                    ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-                    : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
-                )}
-              >
-                <span className="text-xl">{meta?.icon}</span>
-                <span className="leading-tight text-center break-keep">{cat}</span>
-              </button>
-            )
-          })}
+      {mainCategories.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            대분류
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {mainCategories.map((cat) => {
+              const m = mainCategoryMeta[cat]
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => handleMainCategoryChange(cat)}
+                  className={clsx(
+                    'flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
+                    mainCategory === cat
+                      ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  )}
+                >
+                  <span className="text-xl">{m?.icon ?? '📦'}</span>
+                  <span className="leading-tight text-center break-keep">{cat}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 소분류 선택 */}
       {currentSubCategories.length > 0 && (

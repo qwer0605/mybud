@@ -5,6 +5,7 @@ import { Transactions } from '@/pages/Transactions'
 import { Budget } from '@/pages/Budget'
 import { Statistics } from '@/pages/Statistics'
 import { Assets } from '@/pages/Assets'
+import { Settings } from '@/pages/Settings'
 
 export function App() {
   return (
@@ -16,6 +17,7 @@ export function App() {
           <Route path="/budget" element={<Budget />} />
           <Route path="/statistics" element={<Statistics />} />
           <Route path="/assets" element={<Assets />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </AppLayout>
     </BrowserRouter>
