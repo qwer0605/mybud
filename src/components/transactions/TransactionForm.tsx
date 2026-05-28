@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Transaction, TransactionFormData, TransactionType, PaymentMethod } from '@/types'
+import type { Transaction, TransactionFormData, TransactionType, PaymentMethod, AssetAccount } from '@/types'
 import { useCategoryStore } from '@/store/categoryStore'
 import { useAssetStore } from '@/store/assetStore'
 import { getTodayString, formatAmountInput } from '@/utils/formatters'
@@ -12,6 +12,25 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] =
   { value: 'transfer', label: '계좌이체', icon: '🏦' },
 ]
 
+// ─── 유형·결제수단에 맞는 기본 계좌 ID 반환 ───
+function getDefaultAccountId(
+  txType: TransactionType,
+  method: PaymentMethod,
+  accounts: AssetAccount[]
+): string {
+  if (accounts.length === 0) return ''
+  if (txType === 'income') {
+    // 수입 → 첫 번째 자산 계좌(통장)
+    return accounts.find((a) => !a.isLiability)?.id ?? ''
+  }
+  if (method === 'card') {
+    // 카드 지출 → 첫 번째 부채 계좌(신용카드), 없으면 첫 계좌
+    return accounts.find((a) => a.isLiability)?.id ?? accounts[0]?.id ?? ''
+  }
+  // 현금/이체 지출 → 첫 번째 자산 계좌
+  return accounts.find((a) => !a.isLiability)?.id ?? ''
+}
+
 interface TransactionFormProps {
   initial?: Transaction
   onSubmit: (data: TransactionFormData) => void
@@ -20,31 +39,46 @@ interface TransactionFormProps {
 
 export function TransactionForm({ initial, onSubmit, onCancel }: TransactionFormProps) {
   const { expenseTree, incomeTree, expenseMeta, incomeMeta } = useCategoryStore()
-
   const { accounts } = useAssetStore()
-  const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense')
-  const [amount, setAmount] = useState(initial ? String(initial.amount) : '')
-  const [mainCategory, setMainCategory] = useState<string>(initial?.mainCategory ?? '')
-  const [subCategory, setSubCategory] = useState<string>(initial?.subCategory ?? '')
-  const [memo, setMemo] = useState(initial?.memo ?? '')
-  const [date, setDate] = useState(initial?.date ?? getTodayString())
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initial?.paymentMethod ?? 'cash')
-  const [cardAccountId, setCardAccountId] = useState(initial?.cardAccountId ?? '')
+
+  const initType: TransactionType   = initial?.type ?? 'expense'
+  const initMethod: PaymentMethod   = initial?.paymentMethod ?? 'cash'
+
+  const [type, setType]                   = useState<TransactionType>(initType)
+  const [amount, setAmount]               = useState(initial ? String(initial.amount) : '')
+  const [mainCategory, setMainCategory]   = useState<string>(initial?.mainCategory ?? '')
+  const [subCategory, setSubCategory]     = useState<string>(initial?.subCategory ?? '')
+  const [memo, setMemo]                   = useState(initial?.memo ?? '')
+  const [date, setDate]                   = useState(initial?.date ?? getTodayString())
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initMethod)
+  // 수정 모드: 기존 값 복원 / 신규: 유형·결제수단에 맞는 기본 계좌 자동 선택
+  const [cardAccountId, setCardAccountId] = useState<string>(
+    initial?.cardAccountId ?? getDefaultAccountId(initType, initMethod, accounts)
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // 수입으로 전환 시 결제수단 초기화
+  // 유형(수입/지출) 변경
   const handleTypeChange = (t: TransactionType) => {
     setType(t)
-    if (t === 'income') { setPaymentMethod('cash'); setCardAccountId('') }
+    if (t === 'income') {
+      setPaymentMethod('cash')
+      setCardAccountId(getDefaultAccountId('income', 'cash', accounts))
+    } else {
+      setCardAccountId(getDefaultAccountId('expense', paymentMethod, accounts))
+    }
   }
 
-  const categoryTree = type === 'expense' ? expenseTree : incomeTree
-  const mainCategoryMeta = type === 'expense' ? expenseMeta : incomeMeta
-  const mainCategories = Object.keys(categoryTree)
+  // 결제수단 변경 → 계좌 기본값 재계산
+  const handlePaymentMethodChange = (method: PaymentMethod) => {
+    setPaymentMethod(method)
+    setCardAccountId(getDefaultAccountId('expense', method, accounts))
+  }
 
-  // 첫 번째 카테고리 기본값
-  const firstMain = mainCategories[0] ?? ''
-  const firstSub = firstMain ? (categoryTree[firstMain]?.[0] ?? '') : ''
+  const categoryTree       = type === 'expense' ? expenseTree : incomeTree
+  const mainCategoryMeta   = type === 'expense' ? expenseMeta : incomeMeta
+  const mainCategories     = Object.keys(categoryTree)
+  const firstMain          = mainCategories[0] ?? ''
+  const firstSub           = firstMain ? (categoryTree[firstMain]?.[0] ?? '') : ''
 
   // 유형 변경 시 카테고리 리셋
   useEffect(() => {
@@ -68,18 +102,15 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   // 대분류 변경 시 소분류 첫 번째로 리셋
   const handleMainCategoryChange = (main: string) => {
     setMainCategory(main)
-    const subs = categoryTree[main] ?? []
-    setSubCategory(subs[0] ?? '')
+    setSubCategory(categoryTree[main]?.[0] ?? '')
   }
 
   const validate = (): boolean => {
     const errs: Record<string, string> = {}
-    if (!amount || parseInt(amount.replace(/[^0-9]/g, '')) <= 0) {
+    if (!amount || parseInt(amount.replace(/[^0-9]/g, '')) <= 0)
       errs.amount = '금액을 입력해주세요'
-    }
-    if (!date) {
+    if (!date)
       errs.date = '날짜를 선택해주세요'
-    }
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -91,6 +122,9 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   }
 
   const currentSubCategories = categoryTree[mainCategory] ?? []
+
+  // 현재 연결된 계좌 정보
+  const linkedAccount = accounts.find((a) => a.id === cardAccountId)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -132,23 +166,17 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
               'w-full pl-8 pr-4 py-3 rounded-xl border text-right text-lg font-semibold',
               'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
               'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
-              errors.amount
-                ? 'border-red-300 dark:border-red-600'
-                : 'border-gray-200 dark:border-gray-600'
+              errors.amount ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
             )}
           />
         </div>
-        {errors.amount && (
-          <p className="mt-1 text-xs text-red-500">{errors.amount}</p>
-        )}
+        {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount}</p>}
       </div>
 
       {/* 대분류 선택 */}
       {mainCategories.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            대분류
-          </label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">대분류</label>
           <div className="grid grid-cols-4 gap-2">
             {mainCategories.map((cat) => {
               const m = mainCategoryMeta[cat]
@@ -176,9 +204,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
       {/* 소분류 선택 */}
       {currentSubCategories.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            소분류
-          </label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">소분류</label>
           <div className="flex flex-wrap gap-2">
             {currentSubCategories.map((sub) => (
               <button
@@ -199,44 +225,16 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
         </div>
       )}
 
-      {/* 입금 계좌 (수입만) */}
-      {type === 'income' && accounts.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            입금 계좌 <span className="text-xs font-normal text-gray-400">(선택)</span>
-          </label>
-          <select
-            value={cardAccountId}
-            onChange={(e) => setCardAccountId(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">선택 안함 (잔액 미연동)</option>
-            {accounts.filter(a => !a.isLiability).map((a) => (
-              <option key={a.id} value={a.id}>
-                🏦 {a.name} ({a.amount.toLocaleString('ko-KR')}원)
-              </option>
-            ))}
-          </select>
-          {cardAccountId && (
-            <p className="mt-1 text-xs text-green-500 dark:text-green-400">
-              💰 수입 금액이 선택 계좌 잔액에 추가됩니다
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* 결제수단 (지출만) */}
+      {/* ── 결제수단 + 계좌 연동 ── */}
       {type === 'expense' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-            결제수단
-          </label>
-          <div className="flex gap-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">결제수단</label>
+          <div className="flex gap-2 mb-2">
             {PAYMENT_METHODS.map((m) => (
               <button
                 key={m.value}
                 type="button"
-                onClick={() => { setPaymentMethod(m.value); if (m.value !== 'card') setCardAccountId('') }}
+                onClick={() => handlePaymentMethodChange(m.value)}
                 className={clsx(
                   'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium border transition-all',
                   paymentMethod === m.value
@@ -249,39 +247,35 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
               </button>
             ))}
           </div>
-          {/* 계좌 선택 (결제수단별 라벨/안내 문구 다름) */}
           {accounts.length > 0 && (
-            <div className="mt-2">
-              <select
-                value={cardAccountId}
-                onChange={(e) => setCardAccountId(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">
-                  {paymentMethod === 'card' ? '카드를 선택하세요' : '출금 계좌를 선택하세요'}
-                  {' '}(선택 안하면 잔액 미연동)
-                </option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.isLiability ? '💳 ' : '🏦 '}{a.name}
-                    {' '}({a.isLiability ? '-' : ''}{a.amount.toLocaleString('ko-KR')}원)
-                  </option>
-                ))}
-              </select>
-              {cardAccountId && (() => {
-                const linked = accounts.find(a => a.id === cardAccountId)
-                if (!linked) return null
-                const isCard = paymentMethod === 'card' && linked.isLiability
-                return (
-                  <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
-                    {isCard
-                      ? '💳 결제 시 카드 미결제 잔액이 증가합니다'
-                      : '🏦 결제 시 계좌 잔액이 차감됩니다'}
-                  </p>
-                )
-              })()}
-            </div>
+            <AccountSelector
+              label={paymentMethod === 'card' ? '카드 선택' : '출금 계좌'}
+              accounts={accounts}
+              value={cardAccountId}
+              onChange={setCardAccountId}
+              hint={
+                linkedAccount
+                  ? linkedAccount.isLiability
+                    ? '💳 카드 미결제 잔액이 증가합니다'
+                    : '🏦 계좌 잔액이 차감됩니다'
+                  : undefined
+              }
+            />
           )}
+        </div>
+      )}
+
+      {/* ── 입금 계좌 (수입) ── */}
+      {type === 'income' && accounts.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">입금 계좌</label>
+          <AccountSelector
+            accounts={accounts.filter((a) => !a.isLiability)}
+            value={cardAccountId}
+            onChange={setCardAccountId}
+            hint={linkedAccount ? '💰 수입 금액이 계좌 잔액에 추가됩니다' : undefined}
+            hintColor="green"
+          />
         </div>
       )}
 
@@ -298,9 +292,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
             'w-full px-4 py-3 rounded-xl border',
             'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
             'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
-            errors.date
-              ? 'border-red-300 dark:border-red-600'
-              : 'border-gray-200 dark:border-gray-600'
+            errors.date ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
           )}
         />
         {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
@@ -308,9 +300,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
 
       {/* 메모 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          메모
-        </label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">메모</label>
         <input
           type="text"
           value={memo}
@@ -323,13 +313,51 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
 
       {/* 버튼 */}
       <div className="flex gap-3 pt-2">
-        <Button type="button" variant="secondary" fullWidth onClick={onCancel}>
-          취소
-        </Button>
+        <Button type="button" variant="secondary" fullWidth onClick={onCancel}>취소</Button>
         <Button type="submit" variant="primary" fullWidth>
           {initial ? '수정 완료' : '추가하기'}
         </Button>
       </div>
     </form>
+  )
+}
+
+// ─── 계좌 선택 공용 컴포넌트 ───
+interface AccountSelectorProps {
+  label?: string
+  accounts: AssetAccount[]
+  value: string
+  onChange: (id: string) => void
+  hint?: string
+  hintColor?: 'blue' | 'green'
+}
+
+function AccountSelector({ accounts, value, onChange, hint, hintColor = 'blue' }: AccountSelectorProps) {
+  return (
+    <>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      >
+        <option value="">연동 안함</option>
+        {accounts.map((a) => (
+          <option key={a.id} value={a.id}>
+            {a.isLiability ? '💳 ' : '🏦 '}{a.name}
+            {' '}({a.isLiability ? '-' : ''}{a.amount.toLocaleString('ko-KR')}원)
+          </option>
+        ))}
+      </select>
+      {hint && (
+        <p className={clsx(
+          'mt-1 text-xs',
+          hintColor === 'green'
+            ? 'text-green-500 dark:text-green-400'
+            : 'text-blue-500 dark:text-blue-400'
+        )}>
+          {hint}
+        </p>
+      )}
+    </>
   )
 }
