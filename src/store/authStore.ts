@@ -16,7 +16,7 @@ import {
   downloadCategories,
   upsertCategories,
 } from '@/firebase/syncService'
-import { PROFILE_STORAGE_KEY, CURRENT_PROFILE_KEY } from '@/utils/constants'
+import { PROFILE_STORAGE_KEY, CURRENT_PROFILE_KEY, getProfileStorageKey } from '@/utils/constants'
 import { CATEGORY_STORAGE_KEY } from '@/store/categoryStore'
 import type { Profile } from '@/store/profileStore'
 
@@ -120,7 +120,19 @@ export const useAuthStore = create<AuthState>((set) => {
         uploadToFirestore(user.uid, profiles).catch(() => {})
       }
     } else {
-      // 로그아웃 시 모든 스토어 초기화 이벤트 발송
+      // 로그아웃 시 localStorage 데이터 삭제 (재로그인 시 Firestore에서 새로 받아옴)
+      // → 샘플 데이터나 이전 유저 데이터가 남지 않도록
+      try {
+        const profiles = getStoredProfiles()
+        for (const profile of profiles) {
+          localStorage.removeItem(getProfileStorageKey(profile.id, 'transactions'))
+          localStorage.removeItem(getProfileStorageKey(profile.id, 'budgets'))
+          localStorage.removeItem(getProfileStorageKey(profile.id, 'assets'))
+        }
+        localStorage.removeItem(CATEGORY_STORAGE_KEY)
+      } catch { /* ignore */ }
+
+      // 모든 스토어 화면 초기화 이벤트 발송
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('user-logged-out'))
       }
