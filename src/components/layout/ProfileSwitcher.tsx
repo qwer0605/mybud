@@ -4,6 +4,8 @@ import { useTransactionStore } from '@/store/transactionStore'
 import { useBudgetStore } from '@/store/budgetStore'
 import { useAssetStore } from '@/store/assetStore'
 import { getProfileStorageKey } from '@/utils/constants'
+import { getCurrentUser } from '@/store/authStore'
+import { deleteProfileDataFromFirestore } from '@/firebase/syncService'
 import clsx from 'clsx'
 
 // ───── 프로필 생성/수정 폼 ─────
@@ -159,6 +161,11 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
     localStorage.removeItem(getProfileStorageKey(profile.id, 'transactions'))
     localStorage.removeItem(getProfileStorageKey(profile.id, 'budgets'))
     localStorage.removeItem(getProfileStorageKey(profile.id, 'assets'))
+    // Firestore 데이터 삭제 (로그인 상태일 때만)
+    const user = getCurrentUser()
+    if (user) {
+      deleteProfileDataFromFirestore(user.uid, profile.id).catch(() => {})
+    }
     // 스토어 재로드
     reloadTx(profile.id)
     reloadBudget(profile.id)

@@ -172,6 +172,23 @@ export async function downloadFromFirestore(uid: string, profiles: Profile[]): P
   return hasData
 }
 
+// ───── 프로필 데이터 전체 삭제 (통장 초기화 시 사용) ─────
+export async function deleteProfileDataFromFirestore(uid: string, profileId: string): Promise<void> {
+  if (!isFirebaseConfigured || !db) return
+  try {
+    const batch = writeBatch(db)
+    const types: SyncType[] = ['transactions', 'budgets', 'assets']
+    for (const type of types) {
+      const colRef = profileDataCol(uid, profileId, type)
+      const snap = await getDocs(colRef)
+      snap.forEach((d) => batch.delete(d.ref))
+    }
+    await batch.commit()
+  } catch (err) {
+    console.warn('[Sync] deleteProfileDataFromFirestore error:', err)
+  }
+}
+
 // ───── 로컬 → Firestore 전체 업로드 ─────
 export async function uploadToFirestore(uid: string, profiles: Profile[]): Promise<void> {
   if (!isFirebaseConfigured || !db) return
