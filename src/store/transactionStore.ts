@@ -13,12 +13,30 @@ import { upsertDocument, deleteDocument } from '@/firebase/syncService'
 import { getCurrentUser } from '@/store/authStore'
 import { useAssetStore } from '@/store/assetStore'
 
-// ───── 카드 잔액 연동 헬퍼 ─────
-function syncCardBalance(transaction: Transaction, delta: number) {
-  if (transaction.type !== 'expense') return
-  if (transaction.paymentMethod !== 'card') return
-  if (!transaction.cardAccountId) return
-  useAssetStore.getState().adjustAccountAmount(transaction.cardAccountId, delta)
+// ───── 계좌 잔액 연동 헬퍼 ─────
+// sign: +1 = 거래 발생, -1 = 거래 취소(역산)
+function syncLinkedAccountBalance(transaction: Transaction, sign: 1 | -1) {
+  const accountId = transaction.cardAccountId
+  if (!accountId) return
+
+  const account = useAssetStore.getState().accounts.find((a) => a.id === accountId)
+  if (!account) return
+
+  let delta: number
+  if (transaction.type === 'expense') {
+    // 부채 계좌(신용카드): 지출 시 잔액 증가(미결제 누적)
+    // 자산 계좌(통장/현금): 지출 시 잔액 감소
+    delta = account.isLiability
+      ? transaction.amount * sign
+      : -transaction.amount * sign
+  } else {
+    // 수입: 자산 계좌 증가, 부채 계좌 감소(상환)
+    delta = account.isLiability
+      ? -transaction.amount * sign
+      : transaction.amount * sign
+  }
+
+  useAssetStore.getState().adjustAccountAmount(accountId, delta)
 }
 
 // ───── Firestore 동기화 헬퍼 ─────
@@ -143,8 +161,8 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
       saveToStorage(transactions, pid)
       set({ transactions })
       fireSync(pid, newTransaction.id, newTransaction as unknown as Record<string, unknown>)
-      // 카드 잔액 자동 증가
-      syncCardBalance(newTransaction, newTransaction.amount)
+      // 연결 계좌 잔액 자동 반영
+      syncLinkedAccountBalance(newTransaction, 1)
     },
 
     updateTransaction: (id, data) => {
@@ -169,9 +187,9 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
       saveToStorage(transactions, pid)
       set({ transactions })
       fireSync(pid, id, updated as unknown as Record<string, unknown>)
-      // 카드 잔액 역산 후 재적용
-      if (old) syncCardBalance(old, -old.amount)
-      syncCardBalance(updated, updated.amount)
+      // 연결 계좌 잔액 역산 후 재적용
+      if (old) syncLinkedAccountBalance(old, -1)
+      syncLinkedAccountBalance(updated, 1)
     },
 
     deleteTransaction: (id) => {
@@ -181,8 +199,8 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
       saveToStorage(transactions, pid)
       set({ transactions })
       fireDelete(pid, id)
-      // 카드 잔액 역산
-      if (target) syncCardBalance(target, -target.amount)
+      // 연결 계좌 잔액 역산
+      if (target) syncLinkedAccountBalance(target, -1)
     },
 
     setFilter: (filter) => {

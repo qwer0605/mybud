@@ -199,6 +199,32 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
         </div>
       )}
 
+      {/* 입금 계좌 (수입만) */}
+      {type === 'income' && accounts.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            입금 계좌 <span className="text-xs font-normal text-gray-400">(선택)</span>
+          </label>
+          <select
+            value={cardAccountId}
+            onChange={(e) => setCardAccountId(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">선택 안함 (잔액 미연동)</option>
+            {accounts.filter(a => !a.isLiability).map((a) => (
+              <option key={a.id} value={a.id}>
+                🏦 {a.name} ({a.amount.toLocaleString('ko-KR')}원)
+              </option>
+            ))}
+          </select>
+          {cardAccountId && (
+            <p className="mt-1 text-xs text-green-500 dark:text-green-400">
+              💰 수입 금액이 선택 계좌 잔액에 추가됩니다
+            </p>
+          )}
+        </div>
+      )}
+
       {/* 결제수단 (지출만) */}
       {type === 'expense' && (
         <div>
@@ -223,15 +249,18 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
               </button>
             ))}
           </div>
-          {/* 카드 선택 */}
-          {paymentMethod === 'card' && (
+          {/* 계좌 선택 (결제수단별 라벨/안내 문구 다름) */}
+          {accounts.length > 0 && (
             <div className="mt-2">
               <select
                 value={cardAccountId}
                 onChange={(e) => setCardAccountId(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">카드를 선택하세요 (선택 안하면 잔액 미연동)</option>
+                <option value="">
+                  {paymentMethod === 'card' ? '카드를 선택하세요' : '출금 계좌를 선택하세요'}
+                  {' '}(선택 안하면 잔액 미연동)
+                </option>
                 {accounts.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.isLiability ? '💳 ' : '🏦 '}{a.name}
@@ -239,11 +268,18 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
                   </option>
                 ))}
               </select>
-              {cardAccountId && (
-                <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
-                  결제 시 선택 카드 잔액이 자동 갱신됩니다
-                </p>
-              )}
+              {cardAccountId && (() => {
+                const linked = accounts.find(a => a.id === cardAccountId)
+                if (!linked) return null
+                const isCard = paymentMethod === 'card' && linked.isLiability
+                return (
+                  <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
+                    {isCard
+                      ? '💳 결제 시 카드 미결제 잔액이 증가합니다'
+                      : '🏦 결제 시 계좌 잔액이 차감됩니다'}
+                  </p>
+                )
+              })()}
             </div>
           )}
         </div>
