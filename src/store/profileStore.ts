@@ -75,14 +75,27 @@ function saveProfiles(profiles: Profile[]): void {
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles))
 }
 
-function loadActiveProfileId(): string {
-  return localStorage.getItem(CURRENT_PROFILE_KEY) ?? DEFAULT_PROFILE_ID
+/**
+ * 현재 활성 프로필 ID 로드
+ * - 저장된 ID가 프로필 목록에 없으면 첫 번째 프로필로 자동 교정
+ * - 새로고침 후 Firestore 동기화로 프로필 목록이 바뀌어도 버튼이 사라지지 않음
+ */
+function loadActiveProfileId(profiles: Profile[]): string {
+  const stored = localStorage.getItem(CURRENT_PROFILE_KEY) ?? DEFAULT_PROFILE_ID
+  if (profiles.find((p) => p.id === stored)) return stored
+  // 저장된 ID가 목록에 없음 → 첫 번째 프로필로 교정
+  const fallback = profiles[0]?.id ?? DEFAULT_PROFILE_ID
+  localStorage.setItem(CURRENT_PROFILE_KEY, fallback)
+  return fallback
 }
 
 // ───── 스토어 ─────
-export const useProfileStore = create<ProfileState>((set, get) => ({
-  profiles: loadProfiles(),
-  activeProfileId: loadActiveProfileId(),
+export const useProfileStore = create<ProfileState>((set, get) => {
+  const _profiles = loadProfiles()
+  const _activeId  = loadActiveProfileId(_profiles)
+  return {
+  profiles: _profiles,
+  activeProfileId: _activeId,
 
   addProfile: (name, icon, color) => {
     const newProfile: Profile = {
@@ -133,6 +146,15 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
   getActiveProfile: () => {
     const { profiles, activeProfileId } = get()
-    return profiles.find((p) => p.id === activeProfileId)
+    const found = profiles.find((p) => p.id === activeProfileId)
+    if (!found && profiles.length > 0) {
+      // 런타임에 ID 불일치 감지 → 첫 번째 프로필로 자동 교정
+      const fallback = profiles[0]
+      localStorage.setItem(CURRENT_PROFILE_KEY, fallback.id)
+      set({ activeProfileId: fallback.id })
+      return fallback
+    }
+    return found
   },
-}))
+  }
+})

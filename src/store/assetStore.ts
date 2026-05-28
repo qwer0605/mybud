@@ -160,6 +160,8 @@ export const useAssetStore = create<AssetState>((set, get) => {
       const newAccount: AssetAccount = {
         id: uuidv4(),
         ...data,
+        // initialAmount가 전달되지 않은 경우 amount를 기초잔액으로 자동 설정
+        initialAmount: data.initialAmount ?? data.amount,
         createdAt: now,
         updatedAt: now,
       }

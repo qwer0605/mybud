@@ -25,6 +25,7 @@ import {
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from './config'
 import { getProfileStorageKey } from '@/utils/constants'
+import { applyInitialAmountMigration } from '@/utils/assetMigration'
 import type { Transaction, MonthlyBudget, AssetAccount } from '@/types'
 import type { Profile } from '@/store/profileStore'
 import type { CategoryStoreData } from '@/store/categoryStore'
@@ -162,8 +163,20 @@ export async function downloadFromFirestore(uid: string, profiles: Profile[]): P
       const asData: AssetAccount[] = []
       asSnap.forEach((d) => asData.push(d.data() as AssetAccount))
       if (asData.length > 0) {
-        localStorage.setItem(getProfileStorageKey(profile.id, 'assets'), JSON.stringify(asData))
+        // initialAmount 마이그레이션 적용 (구버전 Firestore 데이터 덮어쓰기 방지)
+        const { migrated, changedIds } = applyInitialAmountMigration(asData)
+        localStorage.setItem(getProfileStorageKey(profile.id, 'assets'), JSON.stringify(migrated))
         hasData = true
+        // 마이그레이션된 계좌를 Firestore에 재업로드 (fire-and-forget)
+        if (changedIds.length > 0 && db) {
+          const updatedMap = new Map(migrated.map((a) => [a.id, a]))
+          for (const id of changedIds) {
+            const account = updatedMap.get(id)
+            if (account) {
+              upsertDocument(uid, profile.id, 'assets', id, account as unknown as Record<string, unknown>).catch(() => {})
+            }
+          }
+        }
       }
     }
   } catch (err) {

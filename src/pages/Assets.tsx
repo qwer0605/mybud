@@ -48,7 +48,8 @@ interface AccountFormData {
   name: string
   isLiability: boolean
   type: AssetType | LiabilityType
-  amountStr: string
+  amountStr: string        // 현재잔액
+  initialAmountStr: string // 기초잔액 (수정 모드에서만 사용)
   memo: string
 }
 
@@ -64,6 +65,9 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
     isLiability: initial?.isLiability ?? false,
     type: initial?.type ?? '현금/예금',
     amountStr: initial ? initial.amount.toLocaleString('ko-KR') : '',
+    initialAmountStr: initial
+      ? (initial.initialAmount ?? initial.amount).toLocaleString('ko-KR')
+      : '',
     memo: initial?.memo ?? '',
   })
   const [error, setError] = useState('')
@@ -83,11 +87,15 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
     const amount = parseInt(form.amountStr.replace(/[^0-9]/g, '')) || 0
 
     if (initial) {
+      const initialAmount = form.initialAmountStr.trim() === ''
+        ? amount
+        : (parseInt(form.initialAmountStr.replace(/[^0-9]/g, '')) || 0)
       updateAccount(initial.id, {
         name: form.name.trim(),
         isLiability: form.isLiability,
         type: form.type,
         amount,
+        initialAmount,
         memo: form.memo.trim(),
       })
     } else {
@@ -96,6 +104,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
         isLiability: form.isLiability,
         type: form.type,
         amount,
+        initialAmount: amount, // 신규 등록 시 기초잔액 = 현재잔액
         memo: form.memo.trim(),
       })
     }
@@ -172,10 +181,39 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
         />
       </div>
 
-      {/* 금액 */}
+      {/* 기초잔액 — 수정 모드에서만 표시 */}
+      {initial && (
+        <div>
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">
+            기초잔액
+            <span className="ml-1 font-normal text-gray-400 dark:text-gray-500">(처음 등록 금액 · 직접 수정 가능)</span>
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₩</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={form.initialAmountStr}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, initialAmountStr: formatAmountInput(e.target.value) }))
+                setError('')
+              }}
+              placeholder="0"
+              className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            거래 연동 이전 실제 잔액이 다르면 여기서 수정하세요
+          </p>
+        </div>
+      )}
+
+      {/* 현재잔액 / 현재 평가액 */}
       <div>
         <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">
-          {form.isLiability ? '잔여 부채 금액' : '현재 평가액'}
+          {initial
+            ? (form.isLiability ? '현재 부채 금액' : '현재잔액')
+            : (form.isLiability ? '잔여 부채 금액' : '현재 평가액')}
         </label>
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₩</span>
@@ -188,6 +226,11 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
             className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
+        {initial && (
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            거래 연동 시 자동으로 가감됩니다
+          </p>
+        )}
       </div>
 
       {/* 메모 */}
@@ -239,6 +282,11 @@ function AccountRow({ account, onEdit, onDelete }: AccountRowProps) {
     ? LIABILITY_TYPE_META[account.type as LiabilityType]
     : ASSET_TYPE_META[account.type as AssetType]
 
+  // 기초잔액과 현재잔액이 다를 때만 기초잔액 표시
+  const showInitial =
+    account.initialAmount !== undefined &&
+    account.initialAmount !== account.amount
+
   return (
     <div className="flex items-center gap-3 py-3 px-1 group">
       <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0', meta.bgColor)}>
@@ -249,13 +297,27 @@ function AccountRow({ account, onEdit, onDelete }: AccountRowProps) {
         {account.memo && (
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{account.memo}</p>
         )}
+        {showInitial && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            기초 {account.isLiability ? '-' : ''}
+            {formatCurrency(account.initialAmount!)}
+          </p>
+        )}
       </div>
-      <span className={clsx(
-        'text-sm font-semibold flex-shrink-0',
-        account.isLiability ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
-      )}>
-        {account.isLiability ? '-' : ''}{formatCurrency(account.amount)}
-      </span>
+      <div className="text-right flex-shrink-0">
+        <span className={clsx(
+          'text-sm font-semibold',
+          account.isLiability ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
+        )}>
+          {account.isLiability ? '-' : ''}{formatCurrency(account.amount)}
+        </span>
+        {/* initialAmount가 설정된 계좌는 '현재실금액' 레이블 표시 */}
+        {account.initialAmount !== undefined && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+            {showInitial ? '현재실금액' : '실금액'}
+          </p>
+        )}
+      </div>
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
         <button
           onClick={onEdit}

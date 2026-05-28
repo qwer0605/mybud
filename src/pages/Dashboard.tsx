@@ -17,12 +17,22 @@ import clsx from 'clsx'
 export function Dashboard() {
   const [isAddOpen, setIsAddOpen] = useState(false)
   const { addTransaction } = useTransactionStore()
-  const { getAvailableAssets, dashboardAssetTypes } = useAssetStore()
+  const {
+    getAvailableAssets,
+    getTotalAssets,
+    getTotalLiabilities,
+    getNetWorth,
+    dashboardAssetTypes,
+  } = useAssetStore()
   const yearMonth = getCurrentYearMonth()
   const { totalIncome, totalExpense, balance } = useMonthlyStats(yearMonth)
   const { totalBudget, totalSpent, overallPercentage, isOverBudget, categoryProgress } =
     useBudgetProgress(yearMonth)
-  const availableAssets = getAvailableAssets()
+
+  const availableAssets  = getAvailableAssets()
+  const totalAssets      = getTotalAssets()
+  const totalLiabilities = getTotalLiabilities()
+  const netWorth         = getNetWorth()
 
   const topCategories = categoryProgress
     .filter((c) => c.budgeted > 0)
@@ -43,67 +53,90 @@ export function Dashboard() {
         }
       />
 
-      {/* 요약 카드 */}
-      <div className="grid grid-cols-3 gap-3">
-        <SummaryCard
-          label="총 수입"
-          amount={totalIncome}
-          color="text-green-600 dark:text-green-400"
-          bgColor="bg-green-50 dark:bg-green-900/20"
-          icon="📈"
-        />
-        <SummaryCard
-          label="총 지출"
-          amount={totalExpense}
-          color="text-red-600 dark:text-red-400"
-          bgColor="bg-red-50 dark:bg-red-900/20"
-          icon="📉"
-        />
-        <SummaryCard
-          label="잔액"
-          amount={balance}
-          color={balance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}
-          bgColor="bg-blue-50 dark:bg-blue-900/20"
-          icon="💳"
-        />
-      </div>
-
-      {/* 가용자산 카드 */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-2">
+      {/* ── 섹션 1: 현재 보유자산 ── */}
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 rounded-2xl p-5 shadow-md">
+        <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <span className="text-lg">💰</span>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">가용자산</span>
+            <span className="text-sm font-semibold text-white/90">현재 보유자산</span>
           </div>
           <Link
             to="/assets"
-            className="text-xs font-medium text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
+            className="text-xs font-medium text-white/70 hover:text-white transition-colors"
           >
             관리 →
           </Link>
         </div>
-        <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+
+        {/* 가용자산 메인 숫자 */}
+        <p className="text-3xl font-bold text-white mt-2 mb-0.5">
           {formatCurrency(availableAssets)}
         </p>
-        {dashboardAssetTypes.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {dashboardAssetTypes.map((type) => (
-              <span
-                key={type}
-                className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full"
-              >
-                {type}
-              </span>
-            ))}
+        <p className="text-xs text-white/60 mb-4">
+          {dashboardAssetTypes.length > 0
+            ? `${dashboardAssetTypes.join(' · ')} 기준`
+            : '자산 관리에서 유형을 선택하세요'}
+        </p>
+
+        {/* 총자산 / 총부채 / 순자산 */}
+        <div className="grid grid-cols-3 gap-2">
+          <AssetStatBox label="총 자산" amount={totalAssets} colorClass="text-white" />
+          <AssetStatBox label="총 부채" amount={totalLiabilities} colorClass="text-red-300" prefix="-" />
+          <AssetStatBox
+            label="순자산"
+            amount={Math.abs(netWorth)}
+            colorClass={netWorth >= 0 ? 'text-green-300' : 'text-red-300'}
+            prefix={netWorth < 0 ? '-' : ''}
+          />
+        </div>
+      </div>
+
+      {/* ── 섹션 2: 이번달 현금흐름 ── */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              이번달 현금흐름
+            </h2>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              거래 기록 기준 · 수입 / 지출 합계
+            </p>
           </div>
-        ) : (
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            자산 관리 탭에서 유형을 선택해주세요
-          </p>
+          <Link
+            to="/transactions"
+            className="text-xs font-medium text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
+          >
+            거래 내역 →
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          <FlowCard label="수입" amount={totalIncome} colorClass="text-green-600 dark:text-green-400" bgClass="bg-green-50 dark:bg-green-900/20" icon="📈" />
+          <FlowCard label="지출" amount={totalExpense} colorClass="text-red-600 dark:text-red-400"   bgClass="bg-red-50 dark:bg-red-900/20"   icon="📉" />
+          <FlowCard
+            label="수지"
+            amount={balance}
+            colorClass={balance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}
+            bgClass={balance >= 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-red-50 dark:bg-red-900/20'}
+            icon={balance >= 0 ? '🟢' : '🔴'}
+            signed
+          />
+        </div>
+
+        {/* 현금흐름 vs 자산 안내 메시지 (수지가 마이너스일 때만 표시) */}
+        {balance < 0 && availableAssets > 0 && (
+          <div className="mt-3 p-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl flex items-start gap-2">
+            <span className="text-sm mt-0.5">💡</span>
+            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+              이번달 지출이 수입보다 많지만, 보유자산은{' '}
+              <span className="font-semibold">{formatCurrency(availableAssets)}</span>입니다.
+              현금흐름과 보유자산은 별개로 계산됩니다.
+            </p>
+          </div>
         )}
       </div>
 
-      {/* 예산 현황 */}
+      {/* ── 섹션 3: 예산 현황 ── */}
       {totalBudget > 0 && (
         <Card>
           <CardHeader
@@ -127,7 +160,6 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* 카테고리별 미니 게이지 */}
           {topCategories.length > 0 && (
             <div className="mt-4 grid grid-cols-2 gap-3">
               {topCategories.map((item) => (
@@ -155,7 +187,7 @@ export function Dashboard() {
         </Card>
       )}
 
-      {/* 최근 거래 내역 */}
+      {/* ── 섹션 4: 최근 거래 내역 ── */}
       <Card padding="none">
         <div className="p-5 pb-0">
           <CardHeader
@@ -186,21 +218,43 @@ export function Dashboard() {
   )
 }
 
-interface SummaryCardProps {
+// ─── 보유자산 통계 박스 (그라데이션 카드 내부) ───
+interface AssetStatBoxProps {
   label: string
   amount: number
-  color: string
-  bgColor: string
-  icon: string
+  colorClass: string
+  prefix?: string
 }
 
-function SummaryCard({ label, amount, color, bgColor, icon }: SummaryCardProps) {
+function AssetStatBox({ label, amount, colorClass, prefix = '' }: AssetStatBoxProps) {
   return (
-    <div className={clsx('rounded-2xl p-3 sm:p-4', bgColor)}>
-      <div className="text-xl sm:text-2xl mb-1">{icon}</div>
+    <div className="bg-white/10 rounded-xl p-2.5 text-center">
+      <p className="text-xs text-white/60 mb-1">{label}</p>
+      <p className={clsx('text-sm font-bold leading-tight', colorClass)}>
+        {prefix}{formatCurrency(amount)}
+      </p>
+    </div>
+  )
+}
+
+// ─── 현금흐름 카드 ───
+interface FlowCardProps {
+  label: string
+  amount: number
+  colorClass: string
+  bgClass: string
+  icon: string
+  signed?: boolean
+}
+
+function FlowCard({ label, amount, colorClass, bgClass, icon, signed = false }: FlowCardProps) {
+  return (
+    <div className={clsx('rounded-xl p-3', bgClass)}>
+      <div className="text-lg mb-1">{icon}</div>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
-      <p className={clsx('text-sm sm:text-base font-bold leading-tight', color)}>
-        {formatCurrency(amount)}
+      <p className={clsx('text-sm font-bold leading-tight', colorClass)}>
+        {signed && amount < 0 ? '-' : signed && amount > 0 ? '+' : ''}
+        {formatCurrency(Math.abs(amount))}
       </p>
     </div>
   )

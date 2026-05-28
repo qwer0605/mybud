@@ -172,7 +172,10 @@ export interface AssetAccount {
   name: string
   type: AssetType | LiabilityType
   isLiability: boolean
+  /** 거래 연동으로 자동 갱신되는 현재 잔액 */
   amount: number
+  /** 최초 등록 시 입력한 기초잔액 (거래 연동과 무관하게 직접 수정 가능) */
+  initialAmount?: number
   memo: string
   updatedAt: string
   createdAt: string
