@@ -121,6 +121,9 @@ interface AssetState {
   /** 계좌 간 이체 (fromId → toId, amount 차감/추가) */
   transferBetweenAccounts: (fromId: string, toId: string, amount: number) => void
 
+  /** 카드 거래 연동 시 잔액 delta 조정 (카드 지출 +, 거래 취소 -) */
+  adjustAccountAmount: (id: string, delta: number) => void
+
   /** 프로필 전환 시 데이터 재로드 */
   reloadForProfile: (profileId: string) => void
 }
@@ -265,6 +268,19 @@ export const useAssetStore = create<AssetState>((set, get) => {
       const toUpdated   = accounts.find((a) => a.id === toId)
       if (fromUpdated) fireSync(pid, fromId, fromUpdated as unknown as Record<string, unknown>)
       if (toUpdated)   fireSync(pid, toId,   toUpdated   as unknown as Record<string, unknown>)
+    },
+
+    adjustAccountAmount: (id, delta) => {
+      if (delta === 0) return
+      const pid = getActiveProfileId()
+      const now = new Date().toISOString()
+      const accounts = get().accounts.map((a) =>
+        a.id === id ? { ...a, amount: a.amount + delta, updatedAt: now } : a
+      )
+      saveAccounts(accounts, pid)
+      set({ accounts })
+      const updated = accounts.find((a) => a.id === id)
+      if (updated) fireSync(pid, id, updated as unknown as Record<string, unknown>)
     },
 
     reloadForProfile: (profileId) => {

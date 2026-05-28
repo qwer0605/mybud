@@ -1,9 +1,16 @@
 import { useState, useEffect } from 'react'
-import type { Transaction, TransactionFormData, TransactionType } from '@/types'
+import type { Transaction, TransactionFormData, TransactionType, PaymentMethod } from '@/types'
 import { useCategoryStore } from '@/store/categoryStore'
+import { useAssetStore } from '@/store/assetStore'
 import { getTodayString, formatAmountInput } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
 import clsx from 'clsx'
+
+const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
+  { value: 'cash',     label: '현금',    icon: '💵' },
+  { value: 'card',     label: '카드',    icon: '💳' },
+  { value: 'transfer', label: '계좌이체', icon: '🏦' },
+]
 
 interface TransactionFormProps {
   initial?: Transaction
@@ -14,13 +21,22 @@ interface TransactionFormProps {
 export function TransactionForm({ initial, onSubmit, onCancel }: TransactionFormProps) {
   const { expenseTree, incomeTree, expenseMeta, incomeMeta } = useCategoryStore()
 
+  const { accounts } = useAssetStore()
   const [type, setType] = useState<TransactionType>(initial?.type ?? 'expense')
   const [amount, setAmount] = useState(initial ? String(initial.amount) : '')
   const [mainCategory, setMainCategory] = useState<string>(initial?.mainCategory ?? '')
   const [subCategory, setSubCategory] = useState<string>(initial?.subCategory ?? '')
   const [memo, setMemo] = useState(initial?.memo ?? '')
   const [date, setDate] = useState(initial?.date ?? getTodayString())
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(initial?.paymentMethod ?? 'cash')
+  const [cardAccountId, setCardAccountId] = useState(initial?.cardAccountId ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // 수입으로 전환 시 결제수단 초기화
+  const handleTypeChange = (t: TransactionType) => {
+    setType(t)
+    if (t === 'income') { setPaymentMethod('cash'); setCardAccountId('') }
+  }
 
   const categoryTree = type === 'expense' ? expenseTree : incomeTree
   const mainCategoryMeta = type === 'expense' ? expenseMeta : incomeMeta
@@ -71,7 +87,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-    onSubmit({ type, amount, mainCategory, subCategory, memo, date })
+    onSubmit({ type, amount, mainCategory, subCategory, memo, date, paymentMethod, cardAccountId })
   }
 
   const currentSubCategories = categoryTree[mainCategory] ?? []
@@ -84,7 +100,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           <button
             key={t}
             type="button"
-            onClick={() => setType(t)}
+            onClick={() => handleTypeChange(t)}
             className={clsx(
               'flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-150',
               type === t
@@ -180,6 +196,56 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* 결제수단 (지출만) */}
+      {type === 'expense' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            결제수단
+          </label>
+          <div className="flex gap-2">
+            {PAYMENT_METHODS.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => { setPaymentMethod(m.value); if (m.value !== 'card') setCardAccountId('') }}
+                className={clsx(
+                  'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium border transition-all',
+                  paymentMethod === m.value
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-blue-400'
+                )}
+              >
+                <span>{m.icon}</span>
+                <span>{m.label}</span>
+              </button>
+            ))}
+          </div>
+          {/* 카드 선택 */}
+          {paymentMethod === 'card' && (
+            <div className="mt-2">
+              <select
+                value={cardAccountId}
+                onChange={(e) => setCardAccountId(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">카드를 선택하세요 (선택 안하면 잔액 미연동)</option>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.isLiability ? '💳 ' : '🏦 '}{a.name}
+                    {' '}({a.isLiability ? '-' : ''}{a.amount.toLocaleString('ko-KR')}원)
+                  </option>
+                ))}
+              </select>
+              {cardAccountId && (
+                <p className="mt-1 text-xs text-blue-500 dark:text-blue-400">
+                  결제 시 선택 카드 잔액이 자동 갱신됩니다
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

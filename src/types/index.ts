@@ -84,6 +84,8 @@ export interface Transaction {
   date: string // ISO 날짜 문자열 YYYY-MM-DD
   createdAt: string
   updatedAt: string
+  paymentMethod?: PaymentMethod   // 결제수단 (없으면 현금으로 간주)
+  cardAccountId?: string          // 카드 선택 시 연결된 자산계좌 id
 }
 
 // ───── 예산 ─────
@@ -132,6 +134,8 @@ export interface TransactionFormData {
   subCategory: string
   memo: string
   date: string
+  paymentMethod: PaymentMethod    // 결제수단 (기본 'cash')
+  cardAccountId: string           // 카드 선택 시 계좌 id, 아니면 빈 문자열
 }
 
 export interface BudgetFormData {
@@ -158,7 +162,10 @@ export interface CategoryMeta {
 
 // ───── 자산 관리 ─────
 export type AssetType = '현금/예금' | '투자' | '부동산' | '연금/보험' | '기타자산'
-export type LiabilityType = '대출' | '카드할부' | '전세보증금' | '기타부채'
+export type LiabilityType = '신용카드' | '대출' | '카드할부' | '전세보증금' | '기타부채'
+
+// ───── 결제수단 ─────
+export type PaymentMethod = 'cash' | 'card' | 'transfer'
 
 export interface AssetAccount {
   id: string

@@ -18,7 +18,7 @@ import clsx from 'clsx'
 
 // ───── 자산/부채 유형 목록 ─────
 const ASSET_TYPES: AssetType[] = ['현금/예금', '투자', '부동산', '연금/보험', '기타자산']
-const LIABILITY_TYPES: LiabilityType[] = ['대출', '카드할부', '전세보증금', '기타부채']
+const LIABILITY_TYPES: LiabilityType[] = ['신용카드', '대출', '카드할부', '전세보증금', '기타부채']
 
 const ASSET_TYPE_META: Record<AssetType, { icon: string; color: string; bgColor: string }> = {
   '현금/예금': { icon: '🏦', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-900/20' },
@@ -29,8 +29,9 @@ const ASSET_TYPE_META: Record<AssetType, { icon: string; color: string; bgColor:
 }
 
 const LIABILITY_TYPE_META: Record<LiabilityType, { icon: string; color: string; bgColor: string }> = {
+  신용카드: { icon: '💳', color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-900/20' },
   대출: { icon: '🏛️', color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-50 dark:bg-red-900/20' },
-  카드할부: { icon: '💳', color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-900/20' },
+  카드할부: { icon: '🔄', color: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-900/20' },
   전세보증금: { icon: '🔑', color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-900/20' },
   기타부채: { icon: '📋', color: 'text-gray-600 dark:text-gray-400', bgColor: 'bg-gray-50 dark:bg-gray-700/30' },
 }

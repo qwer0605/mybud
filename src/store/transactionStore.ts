@@ -11,6 +11,15 @@ import { sampleTransactions } from '@/utils/sampleData'
 import { isFirebaseConfigured } from '@/firebase/config'
 import { upsertDocument, deleteDocument } from '@/firebase/syncService'
 import { getCurrentUser } from '@/store/authStore'
+import { useAssetStore } from '@/store/assetStore'
+
+// ───── 카드 잔액 연동 헬퍼 ─────
+function syncCardBalance(transaction: Transaction, delta: number) {
+  if (transaction.type !== 'expense') return
+  if (transaction.paymentMethod !== 'card') return
+  if (!transaction.cardAccountId) return
+  useAssetStore.getState().adjustAccountAmount(transaction.cardAccountId, delta)
+}
 
 // ───── Firestore 동기화 헬퍼 ─────
 function fireSync(profileId: string, id: string, data: Record<string, unknown>): void {
@@ -127,42 +136,53 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         date: data.date,
         createdAt: now,
         updatedAt: now,
+        paymentMethod: data.paymentMethod ?? 'cash',
+        cardAccountId: data.paymentMethod === 'card' ? (data.cardAccountId || undefined) : undefined,
       }
       const transactions = [newTransaction, ...get().transactions]
       saveToStorage(transactions, pid)
       set({ transactions })
       fireSync(pid, newTransaction.id, newTransaction as unknown as Record<string, unknown>)
+      // 카드 잔액 자동 증가
+      syncCardBalance(newTransaction, newTransaction.amount)
     },
 
     updateTransaction: (id, data) => {
       const pid = getActiveProfileId()
       const now = new Date().toISOString()
-      const transactions = get().transactions.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              type: data.type,
-              amount: parseInt(data.amount.replace(/[^0-9]/g, '')) || 0,
-              mainCategory: data.mainCategory,
-              subCategory: data.subCategory,
-              memo: data.memo,
-              date: data.date,
-              updatedAt: now,
-            }
-          : t
-      )
+      const old = get().transactions.find((t) => t.id === id)
+      const newAmount = parseInt(data.amount.replace(/[^0-9]/g, '')) || 0
+      const updated: Transaction = {
+        ...(old ?? {} as Transaction),
+        id,
+        type: data.type,
+        amount: newAmount,
+        mainCategory: data.mainCategory,
+        subCategory: data.subCategory,
+        memo: data.memo,
+        date: data.date,
+        updatedAt: now,
+        paymentMethod: data.paymentMethod ?? 'cash',
+        cardAccountId: data.paymentMethod === 'card' ? (data.cardAccountId || undefined) : undefined,
+      }
+      const transactions = get().transactions.map((t) => t.id === id ? updated : t)
       saveToStorage(transactions, pid)
       set({ transactions })
-      const updated = transactions.find((t) => t.id === id)
-      if (updated) fireSync(pid, id, updated as unknown as Record<string, unknown>)
+      fireSync(pid, id, updated as unknown as Record<string, unknown>)
+      // 카드 잔액 역산 후 재적용
+      if (old) syncCardBalance(old, -old.amount)
+      syncCardBalance(updated, updated.amount)
     },
 
     deleteTransaction: (id) => {
       const pid = getActiveProfileId()
+      const target = get().transactions.find((t) => t.id === id)
       const transactions = get().transactions.filter((t) => t.id !== id)
       saveToStorage(transactions, pid)
       set({ transactions })
       fireDelete(pid, id)
+      // 카드 잔액 역산
+      if (target) syncCardBalance(target, -target.amount)
     },
 
     setFilter: (filter) => {

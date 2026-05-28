@@ -46,8 +46,8 @@ export function TransactionItem({ transaction, onEdit, onDelete }: TransactionIt
             {transaction.memo || transaction.subCategory}
           </span>
         </div>
-        {/* 대분류 > 소분류 표시 */}
-        <div className="flex items-center gap-1 mt-0.5">
+        {/* 대분류 > 소분류 + 결제수단 */}
+        <div className="flex items-center gap-1 mt-0.5 flex-wrap">
           <span className="text-xs text-gray-400 dark:text-gray-500">
             {transaction.mainCategory}
           </span>
@@ -55,6 +55,16 @@ export function TransactionItem({ transaction, onEdit, onDelete }: TransactionIt
           <span className="text-xs text-gray-400 dark:text-gray-500">
             {transaction.subCategory}
           </span>
+          {transaction.type === 'expense' && transaction.paymentMethod && transaction.paymentMethod !== 'cash' && (
+            <span className={clsx(
+              'text-xs px-1.5 py-0.5 rounded-full font-medium',
+              transaction.paymentMethod === 'card'
+                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+            )}>
+              {transaction.paymentMethod === 'card' ? '💳 카드' : '🏦 이체'}
+            </span>
+          )}
         </div>
       </div>
 
