@@ -118,6 +118,9 @@ interface AssetState {
   /** 대시보드 가용자산 합계 */
   getAvailableAssets: () => number
 
+  /** 계좌 간 이체 (fromId → toId, amount 차감/추가) */
+  transferBetweenAccounts: (fromId: string, toId: string, amount: number) => void
+
   /** 프로필 전환 시 데이터 재로드 */
   reloadForProfile: (profileId: string) => void
 }
@@ -245,6 +248,23 @@ export const useAssetStore = create<AssetState>((set, get) => {
       return accounts
         .filter((a) => !a.isLiability && dashboardAssetTypes.includes(a.type as AssetType))
         .reduce((sum, a) => sum + a.amount, 0)
+    },
+
+    transferBetweenAccounts: (fromId, toId, amount) => {
+      const pid = getActiveProfileId()
+      const now = new Date().toISOString()
+      const accounts = get().accounts.map((a) => {
+        if (a.id === fromId) return { ...a, amount: a.amount - amount, updatedAt: now }
+        if (a.id === toId)   return { ...a, amount: a.amount + amount, updatedAt: now }
+        return a
+      })
+      saveAccounts(accounts, pid)
+      set({ accounts })
+      get().saveSnapshot()
+      const fromUpdated = accounts.find((a) => a.id === fromId)
+      const toUpdated   = accounts.find((a) => a.id === toId)
+      if (fromUpdated) fireSync(pid, fromId, fromUpdated as unknown as Record<string, unknown>)
+      if (toUpdated)   fireSync(pid, toId,   toUpdated   as unknown as Record<string, unknown>)
     },
 
     reloadForProfile: (profileId) => {

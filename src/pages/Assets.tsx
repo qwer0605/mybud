@@ -325,9 +325,11 @@ export function Assets() {
     accounts, snapshots,
     getTotalAssets, getTotalLiabilities, getNetWorth, deleteAccount,
     dashboardAssetTypes, toggleDashboardAssetType,
+    transferBetweenAccounts,
   } = useAssetStore()
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<AssetAccount | undefined>()
+  const [transferOpen, setTransferOpen] = useState(false)
 
   const totalAssets = getTotalAssets()
   const totalLiabilities = getTotalLiabilities()
@@ -370,12 +372,20 @@ export function Assets() {
         title="자산 관리"
         subtitle="나의 순자산 현황"
         action={
-          <Button size="sm" onClick={() => openAdd(false)}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            자산 추가
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setTransferOpen(true)}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              계좌 이체
+            </Button>
+            <Button size="sm" onClick={() => openAdd(false)}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              자산 추가
+            </Button>
+          </div>
         }
       />
 
@@ -551,7 +561,7 @@ export function Assets() {
         )}
       </div>
 
-      {/* 모달 */}
+      {/* 자산/부채 추가·수정 모달 */}
       <Modal
         isOpen={modalOpen}
         onClose={closeModal}
@@ -566,7 +576,153 @@ export function Assets() {
           onClose={closeModal}
         />
       </Modal>
+
+      {/* 계좌 이체 모달 */}
+      <Modal isOpen={transferOpen} onClose={() => setTransferOpen(false)} title="계좌 이체">
+        <TransferModal
+          accounts={accounts}
+          onTransfer={(fromId, toId, amount) => {
+            transferBetweenAccounts(fromId, toId, amount)
+            setTransferOpen(false)
+          }}
+          onClose={() => setTransferOpen(false)}
+        />
+      </Modal>
     </div>
+  )
+}
+
+// ───── 계좌 이체 모달 ─────
+interface TransferModalProps {
+  accounts: AssetAccount[]
+  onTransfer: (fromId: string, toId: string, amount: number) => void
+  onClose: () => void
+}
+
+function TransferModal({ accounts, onTransfer, onClose }: TransferModalProps) {
+  const [fromId, setFromId] = useState(accounts[0]?.id ?? '')
+  const [toId, setToId] = useState(accounts[1]?.id ?? accounts[0]?.id ?? '')
+  const [amountStr, setAmountStr] = useState('')
+  const [error, setError] = useState('')
+
+  const fromAccount = accounts.find((a) => a.id === fromId)
+  const toAccount   = accounts.find((a) => a.id === toId)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!fromId || !toId) { setError('계좌를 선택해주세요'); return }
+    if (fromId === toId)  { setError('출금 계좌와 입금 계좌가 같습니다'); return }
+    const amount = parseInt(amountStr.replace(/[^0-9]/g, '')) || 0
+    if (amount <= 0) { setError('이체 금액을 입력해주세요'); return }
+    onTransfer(fromId, toId, amount)
+  }
+
+  const selectClass =
+    'w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+
+  return (
+    <form onSubmit={handleSubmit} className="p-5 space-y-4">
+      {/* 출금 계좌 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">출금 계좌</label>
+        <select
+          value={fromId}
+          onChange={(e) => { setFromId(e.target.value); setError('') }}
+          className={selectClass}
+        >
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} ({a.isLiability ? '-' : ''}{a.amount.toLocaleString('ko-KR')}원)
+            </option>
+          ))}
+        </select>
+        {fromAccount && (
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            현재 잔액 {fromAccount.isLiability ? '-' : ''}{formatCurrency(fromAccount.amount)}
+          </p>
+        )}
+      </div>
+
+      {/* 이체 방향 표시 */}
+      <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+          <span className="text-xs font-medium">이체</span>
+        </div>
+      </div>
+
+      {/* 입금 계좌 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">입금 계좌</label>
+        <select
+          value={toId}
+          onChange={(e) => { setToId(e.target.value); setError('') }}
+          className={selectClass}
+        >
+          {accounts.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} ({a.isLiability ? '-' : ''}{a.amount.toLocaleString('ko-KR')}원)
+            </option>
+          ))}
+        </select>
+        {toAccount && (
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            현재 잔액 {toAccount.isLiability ? '-' : ''}{formatCurrency(toAccount.amount)}
+          </p>
+        )}
+      </div>
+
+      {/* 이체 금액 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">이체 금액</label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₩</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={amountStr}
+            onChange={(e) => { setAmountStr(formatAmountInput(e.target.value)); setError('') }}
+            placeholder="0"
+            autoFocus
+            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        {/* 이체 후 잔액 미리보기 */}
+        {amountStr && fromAccount && toAccount && fromId !== toId && (() => {
+          const amt = parseInt(amountStr.replace(/[^0-9]/g, '')) || 0
+          if (amt <= 0) return null
+          return (
+            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+              이체 후 →&nbsp;
+              <span className="font-medium text-gray-600 dark:text-gray-300">{fromAccount.name}</span>
+              &nbsp;{formatCurrency(fromAccount.amount - amt)}&nbsp;/&nbsp;
+              <span className="font-medium text-gray-600 dark:text-gray-300">{toAccount.name}</span>
+              &nbsp;{formatCurrency(toAccount.amount + amt)}
+            </p>
+          )
+        })()}
+      </div>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <div className="flex gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        >
+          취소
+        </button>
+        <button
+          type="submit"
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+        >
+          이체
+        </button>
+      </div>
+    </form>
   )
 }
 
