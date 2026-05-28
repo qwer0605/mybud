@@ -321,8 +321,11 @@ function TypeSection({ title, icon, bgColor, accounts, onEdit, onDelete }: TypeS
 
 // ───── 메인 페이지 ─────
 export function Assets() {
-  const { accounts, snapshots, getTotalAssets, getTotalLiabilities, getNetWorth, deleteAccount } =
-    useAssetStore()
+  const {
+    accounts, snapshots,
+    getTotalAssets, getTotalLiabilities, getNetWorth, deleteAccount,
+    dashboardAssetTypes, toggleDashboardAssetType,
+  } = useAssetStore()
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<AssetAccount | undefined>()
 
@@ -443,7 +446,7 @@ export function Assets() {
 
       {/* ── 섹션 2: 자산 목록 ── */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">자산</h3>
           <button
             onClick={() => openAdd(false)}
@@ -454,6 +457,37 @@ export function Assets() {
             </svg>
             자산 추가
           </button>
+        </div>
+
+        {/* 대시보드 가용자산 표시 설정 */}
+        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+            💰 대시보드 가용자산 표시
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ASSET_TYPES.map((type) => {
+              const meta = ASSET_TYPE_META[type]
+              const isActive = dashboardAssetTypes.includes(type)
+              return (
+                <button
+                  key={type}
+                  onClick={() => toggleDashboardAssetType(type)}
+                  className={clsx(
+                    'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                    isActive
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                      : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600'
+                  )}
+                >
+                  <span>{meta.icon}</span>
+                  <span>{type}</span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
+            선택된 유형만 대시보드 가용자산에 합산됩니다
+          </p>
         </div>
 
         {assetAccounts.length === 0 ? (

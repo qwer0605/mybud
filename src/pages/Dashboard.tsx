@@ -8,6 +8,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm'
 import { TransactionList } from '@/components/transactions/TransactionList'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useTransactionStore } from '@/store/transactionStore'
+import { useAssetStore } from '@/store/assetStore'
 import { useMonthlyStats } from '@/hooks/useMonthlyStats'
 import { useBudgetProgress } from '@/hooks/useBudgetProgress'
 import { getCurrentYearMonth, formatCurrency, formatYearMonth } from '@/utils/formatters'
@@ -16,10 +17,12 @@ import clsx from 'clsx'
 export function Dashboard() {
   const [isAddOpen, setIsAddOpen] = useState(false)
   const { addTransaction } = useTransactionStore()
+  const { getAvailableAssets, dashboardAssetTypes } = useAssetStore()
   const yearMonth = getCurrentYearMonth()
   const { totalIncome, totalExpense, balance } = useMonthlyStats(yearMonth)
   const { totalBudget, totalSpent, overallPercentage, isOverBudget, categoryProgress } =
     useBudgetProgress(yearMonth)
+  const availableAssets = getAvailableAssets()
 
   const topCategories = categoryProgress
     .filter((c) => c.budgeted > 0)
@@ -63,6 +66,41 @@ export function Dashboard() {
           bgColor="bg-blue-50 dark:bg-blue-900/20"
           icon="💳"
         />
+      </div>
+
+      {/* 가용자산 카드 */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">💰</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">가용자산</span>
+          </div>
+          <Link
+            to="/assets"
+            className="text-xs font-medium text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 transition-colors"
+          >
+            관리 →
+          </Link>
+        </div>
+        <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+          {formatCurrency(availableAssets)}
+        </p>
+        {dashboardAssetTypes.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {dashboardAssetTypes.map((type) => (
+              <span
+                key={type}
+                className="text-xs text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full"
+              >
+                {type}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            자산 관리 탭에서 유형을 선택해주세요
+          </p>
+        )}
       </div>
 
       {/* 예산 현황 */}

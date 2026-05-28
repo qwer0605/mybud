@@ -8,9 +8,18 @@ import { useAuthStore } from './authStore'
 
 // ───── localStorage 키 ─────
 const SNAPSHOT_SUFFIX = '_asset_snapshots'
+const DASHBOARD_TYPES_SUFFIX = '_dashboard_asset_types'
+
+// 기본값: 모든 자산 유형 ON
+import type { AssetType } from '@/types'
+const DEFAULT_DASHBOARD_TYPES: AssetType[] = ['현금/예금', '투자', '부동산', '연금/보험', '기타자산']
 
 function getSnapshotKey(profileId: string): string {
   return `budget_app_${profileId}${SNAPSHOT_SUFFIX}`
+}
+
+function getDashboardTypesKey(profileId: string): string {
+  return `budget_app_${profileId}${DASHBOARD_TYPES_SUFFIX}`
 }
 
 // ───── 로드/저장 ─────
@@ -47,6 +56,20 @@ function saveSnapshots(snapshots: AssetSnapshot[], profileId?: string): void {
   localStorage.setItem(getSnapshotKey(pid), JSON.stringify(snapshots))
 }
 
+function loadDashboardTypes(profileId?: string): AssetType[] {
+  const pid = profileId ?? getActiveProfileId()
+  try {
+    const data = localStorage.getItem(getDashboardTypesKey(pid))
+    if (data) return JSON.parse(data) as AssetType[]
+  } catch { /* ignore */ }
+  return [...DEFAULT_DASHBOARD_TYPES]
+}
+
+function saveDashboardTypes(types: AssetType[], profileId?: string): void {
+  const pid = profileId ?? getActiveProfileId()
+  localStorage.setItem(getDashboardTypesKey(pid), JSON.stringify(types))
+}
+
 // ───── 현재 연월 (YYYY-MM) ─────
 function currentYearMonth(): string {
   const now = new Date()
@@ -76,6 +99,8 @@ function fireDelete(profileId: string, id: string): void {
 interface AssetState {
   accounts: AssetAccount[]
   snapshots: AssetSnapshot[]
+  /** 대시보드 가용자산에 포함할 자산 유형 목록 */
+  dashboardAssetTypes: AssetType[]
 
   addAccount: (data: Omit<AssetAccount, 'id' | 'createdAt' | 'updatedAt'>) => void
   updateAccount: (id: string, data: Partial<Omit<AssetAccount, 'id' | 'createdAt'>>) => void
@@ -87,6 +112,11 @@ interface AssetState {
   getTotalAssets: () => number
   getTotalLiabilities: () => number
   getNetWorth: () => number
+
+  /** 대시보드 표시 유형 토글 */
+  toggleDashboardAssetType: (type: AssetType) => void
+  /** 대시보드 가용자산 합계 */
+  getAvailableAssets: () => number
 
   /** 프로필 전환 시 데이터 재로드 */
   reloadForProfile: (profileId: string) => void
@@ -109,13 +139,14 @@ export const useAssetStore = create<AssetState>((set, get) => {
     })
     // 로그아웃 시 화면 초기화
     window.addEventListener('user-logged-out', () => {
-      set({ accounts: [], snapshots: [] })
+      set({ accounts: [], snapshots: [], dashboardAssetTypes: [...DEFAULT_DASHBOARD_TYPES] })
     })
   }
 
   return {
     accounts: loadAccounts(),
     snapshots: loadSnapshots(),
+    dashboardAssetTypes: loadDashboardTypes(),
 
     addAccount: (data) => {
       const pid = getActiveProfileId()
@@ -199,10 +230,28 @@ export const useAssetStore = create<AssetState>((set, get) => {
 
     getNetWorth: () => get().getTotalAssets() - get().getTotalLiabilities(),
 
+    toggleDashboardAssetType: (type) => {
+      const pid = getActiveProfileId()
+      const current = get().dashboardAssetTypes
+      const updated = current.includes(type)
+        ? current.filter((t) => t !== type)
+        : [...current, type]
+      saveDashboardTypes(updated, pid)
+      set({ dashboardAssetTypes: updated })
+    },
+
+    getAvailableAssets: () => {
+      const { accounts, dashboardAssetTypes } = get()
+      return accounts
+        .filter((a) => !a.isLiability && dashboardAssetTypes.includes(a.type as AssetType))
+        .reduce((sum, a) => sum + a.amount, 0)
+    },
+
     reloadForProfile: (profileId) => {
       const accounts = loadAccounts(profileId)
       const snapshots = loadSnapshots(profileId)
-      set({ accounts, snapshots })
+      const dashboardAssetTypes = loadDashboardTypes(profileId)
+      set({ accounts, snapshots, dashboardAssetTypes })
     },
   }
 })
