@@ -7,6 +7,9 @@ import {
   LOCAL_STORAGE_KEYS,
   getProfileStorageKey,
 } from '@/utils/constants'
+import { isFirebaseConfigured } from '@/firebase/config'
+import { syncProfileList } from '@/firebase/syncService'
+import { getCurrentUser } from '@/store/authStore'
 
 // ───── 타입 ─────
 export interface Profile {
@@ -38,14 +41,12 @@ const DEFAULT_PROFILE: Profile = {
 }
 
 // ───── 초기 데이터 마이그레이션 ─────
-// 구형 데이터(budget_app_transactions 등)를 기본 프로필 키로 복사
 function migrateOldData(): void {
   const oldTx = localStorage.getItem(LOCAL_STORAGE_KEYS.TRANSACTIONS)
   const newTx = localStorage.getItem(getProfileStorageKey(DEFAULT_PROFILE_ID, 'transactions'))
   if (oldTx && !newTx) {
     localStorage.setItem(getProfileStorageKey(DEFAULT_PROFILE_ID, 'transactions'), oldTx)
   }
-
   const oldBudget = localStorage.getItem(LOCAL_STORAGE_KEYS.BUDGETS)
   const newBudget = localStorage.getItem(getProfileStorageKey(DEFAULT_PROFILE_ID, 'budgets'))
   if (oldBudget && !newBudget) {
@@ -53,7 +54,7 @@ function migrateOldData(): void {
   }
 }
 
-// ───── 프로필 목록 로드 ─────
+// ───── 프로필 목록 로드/저장 ─────
 function loadProfiles(): Profile[] {
   try {
     const data = localStorage.getItem(PROFILE_STORAGE_KEY)
@@ -61,10 +62,7 @@ function loadProfiles(): Profile[] {
       const parsed = JSON.parse(data) as Profile[]
       if (parsed.length > 0) return parsed
     }
-  } catch {
-    // ignore
-  }
-  // 처음 실행: 기본 프로필 생성 + 구형 데이터 마이그레이션
+  } catch { /* ignore */ }
   migrateOldData()
   const profiles = [DEFAULT_PROFILE]
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profiles))
@@ -78,83 +76,105 @@ function saveProfiles(profiles: Profile[]): void {
 /**
  * 현재 활성 프로필 ID 로드
  * - 저장된 ID가 프로필 목록에 없으면 첫 번째 프로필로 자동 교정
- * - 새로고침 후 Firestore 동기화로 프로필 목록이 바뀌어도 버튼이 사라지지 않음
  */
 function loadActiveProfileId(profiles: Profile[]): string {
   const stored = localStorage.getItem(CURRENT_PROFILE_KEY) ?? DEFAULT_PROFILE_ID
   if (profiles.find((p) => p.id === stored)) return stored
-  // 저장된 ID가 목록에 없음 → 첫 번째 프로필로 교정
   const fallback = profiles[0]?.id ?? DEFAULT_PROFILE_ID
   localStorage.setItem(CURRENT_PROFILE_KEY, fallback)
   return fallback
 }
 
+// ───── Firestore 동기화 헬퍼 ─────
+// 프로필 목록이 변경될 때마다 Firestore에 업로드
+// (로그인 상태일 때만, 비동기 fire-and-forget)
+function syncProfilesToCloud(profiles: Profile[]): void {
+  if (!isFirebaseConfigured) return
+  const user = getCurrentUser()
+  if (!user) return
+  syncProfileList(user.uid, profiles).catch(() => {})
+}
+
 // ───── 스토어 ─────
 export const useProfileStore = create<ProfileState>((set, get) => {
   const _profiles = loadProfiles()
-  const _activeId  = loadActiveProfileId(_profiles)
+  const _activeId = loadActiveProfileId(_profiles)
+
+  // ── 이벤트 구독 ──
+  if (typeof window !== 'undefined') {
+    // Firestore 다운로드 완료 후 프로필 목록 재동기화
+    // (authStore가 Firestore 프로필을 localStorage에 쓴 직후 발생)
+    window.addEventListener('firestore-data-loaded', () => {
+      const profiles   = loadProfiles()
+      const activeProfileId = loadActiveProfileId(profiles)
+      set({ profiles, activeProfileId })
+    })
+  }
+
   return {
-  profiles: _profiles,
-  activeProfileId: _activeId,
+    profiles: _profiles,
+    activeProfileId: _activeId,
 
-  addProfile: (name, icon, color) => {
-    const newProfile: Profile = {
-      id: uuidv4(),
-      name,
-      icon,
-      color,
-      createdAt: new Date().toISOString(),
-    }
-    const profiles = [...get().profiles, newProfile]
-    saveProfiles(profiles)
-    set({ profiles })
-  },
-
-  updateProfile: (id, updates) => {
-    const profiles = get().profiles.map((p) =>
-      p.id === id ? { ...p, ...updates } : p
-    )
-    saveProfiles(profiles)
-    set({ profiles })
-  },
-
-  deleteProfile: (id) => {
-    if (id === DEFAULT_PROFILE_ID) return // 기본 프로필 삭제 불가
-    const profiles = get().profiles.filter((p) => p.id !== id)
-    // 해당 프로필 데이터 삭제
-    localStorage.removeItem(getProfileStorageKey(id, 'transactions'))
-    localStorage.removeItem(getProfileStorageKey(id, 'budgets'))
-    saveProfiles(profiles)
-
-    // 삭제된 프로필이 활성이었다면 기본으로 전환
-    if (get().activeProfileId === id) {
-      const fallbackId = profiles[0]?.id ?? DEFAULT_PROFILE_ID
-      localStorage.setItem(CURRENT_PROFILE_KEY, fallbackId)
-      set({ profiles, activeProfileId: fallbackId })
-    } else {
+    addProfile: (name, icon, color) => {
+      const newProfile: Profile = {
+        id: uuidv4(),
+        name,
+        icon,
+        color,
+        createdAt: new Date().toISOString(),
+      }
+      const profiles = [...get().profiles, newProfile]
+      saveProfiles(profiles)
       set({ profiles })
-    }
-  },
+      // Firestore 즉시 동기화 (새로고침 후 덮어쓰기 방지)
+      syncProfilesToCloud(profiles)
+    },
 
-  switchProfile: (id) => {
-    if (id === get().activeProfileId) return
-    localStorage.setItem(CURRENT_PROFILE_KEY, id)
-    set({ activeProfileId: id })
-    // 각 스토어에 프로필 전환 알림 (동적 import 방지: 전역 이벤트 사용)
-    window.dispatchEvent(new CustomEvent('profile-switch', { detail: { profileId: id } }))
-  },
+    updateProfile: (id, updates) => {
+      const profiles = get().profiles.map((p) =>
+        p.id === id ? { ...p, ...updates } : p
+      )
+      saveProfiles(profiles)
+      set({ profiles })
+      syncProfilesToCloud(profiles)
+    },
 
-  getActiveProfile: () => {
-    const { profiles, activeProfileId } = get()
-    const found = profiles.find((p) => p.id === activeProfileId)
-    if (!found && profiles.length > 0) {
-      // 런타임에 ID 불일치 감지 → 첫 번째 프로필로 자동 교정
-      const fallback = profiles[0]
-      localStorage.setItem(CURRENT_PROFILE_KEY, fallback.id)
-      set({ activeProfileId: fallback.id })
-      return fallback
-    }
-    return found
-  },
+    deleteProfile: (id) => {
+      if (id === DEFAULT_PROFILE_ID) return
+      const profiles = get().profiles.filter((p) => p.id !== id)
+      localStorage.removeItem(getProfileStorageKey(id, 'transactions'))
+      localStorage.removeItem(getProfileStorageKey(id, 'budgets'))
+      localStorage.removeItem(getProfileStorageKey(id, 'assets'))
+      saveProfiles(profiles)
+      syncProfilesToCloud(profiles)
+
+      if (get().activeProfileId === id) {
+        const fallbackId = profiles[0]?.id ?? DEFAULT_PROFILE_ID
+        localStorage.setItem(CURRENT_PROFILE_KEY, fallbackId)
+        set({ profiles, activeProfileId: fallbackId })
+      } else {
+        set({ profiles })
+      }
+    },
+
+    switchProfile: (id) => {
+      if (id === get().activeProfileId) return
+      localStorage.setItem(CURRENT_PROFILE_KEY, id)
+      set({ activeProfileId: id })
+      window.dispatchEvent(new CustomEvent('profile-switch', { detail: { profileId: id } }))
+    },
+
+    getActiveProfile: () => {
+      const { profiles, activeProfileId } = get()
+      const found = profiles.find((p) => p.id === activeProfileId)
+      if (!found && profiles.length > 0) {
+        // 런타임 ID 불일치 → 자동 교정
+        const fallback = profiles[0]
+        localStorage.setItem(CURRENT_PROFILE_KEY, fallback.id)
+        set({ activeProfileId: fallback.id })
+        return fallback
+      }
+      return found
+    },
   }
 })
