@@ -78,8 +78,8 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim()) { setError('이름을 입력해주세요'); return }
+    if (form.amountStr.trim() === '') { setError('금액을 입력해주세요'); return }
     const amount = parseInt(form.amountStr.replace(/[^0-9]/g, '')) || 0
-    if (amount <= 0) { setError('금액을 입력해주세요'); return }
 
     if (initial) {
       updateAccount(initial.id, {
