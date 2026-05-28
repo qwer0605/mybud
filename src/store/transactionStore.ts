@@ -103,6 +103,10 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
       const transactions = loadFromStorage(pid, false)
       set({ transactions, filter: defaultFilter })
     })
+    // 로그아웃 시 화면 초기화
+    window.addEventListener('user-logged-out', () => {
+      set({ transactions: [], filter: defaultFilter })
+    })
   }
 
   return {

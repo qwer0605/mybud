@@ -94,11 +94,22 @@ interface AssetState {
 
 // ───── 스토어 ─────
 export const useAssetStore = create<AssetState>((set, get) => {
-  // 프로필 전환 이벤트 구독
+  // 이벤트 구독
   if (typeof window !== 'undefined') {
     window.addEventListener('profile-switch', (e) => {
       const { profileId } = (e as CustomEvent).detail
       get().reloadForProfile(profileId)
+    })
+    // Firestore 다운로드 완료 시 재로드
+    window.addEventListener('firestore-data-loaded', () => {
+      const pid = getActiveProfileId()
+      const accounts = loadAccounts(pid)
+      const snapshots = loadSnapshots(pid)
+      set({ accounts, snapshots })
+    })
+    // 로그아웃 시 화면 초기화
+    window.addEventListener('user-logged-out', () => {
+      set({ accounts: [], snapshots: [] })
     })
   }
 

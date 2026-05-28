@@ -97,6 +97,10 @@ export const useBudgetStore = create<BudgetState>((set, get) => {
       const budgets = loadFromStorage(pid, false)
       set({ budgets })
     })
+    // 로그아웃 시 화면 초기화
+    window.addEventListener('user-logged-out', () => {
+      set({ budgets: [] })
+    })
   }
 
   return {

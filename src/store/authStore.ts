@@ -120,6 +120,10 @@ export const useAuthStore = create<AuthState>((set) => {
         uploadToFirestore(user.uid, profiles).catch(() => {})
       }
     } else {
+      // 로그아웃 시 모든 스토어 초기화 이벤트 발송
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('user-logged-out'))
+      }
       set({ user: null, isLoading: false })
     }
   })
