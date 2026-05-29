@@ -86,6 +86,7 @@ export interface Transaction {
   updatedAt: string
   paymentMethod?: PaymentMethod   // 결제수단 (없으면 현금으로 간주)
   cardAccountId?: string          // 카드 선택 시 연결된 자산계좌 id
+  recurringId?: string            // 고정비 자동 등록 시 RecurringTransaction id
 }
 
 // ───── 예산 ─────
@@ -136,6 +137,7 @@ export interface TransactionFormData {
   date: string
   paymentMethod: PaymentMethod    // 결제수단 (기본 'cash')
   cardAccountId: string           // 카드 선택 시 계좌 id, 아니면 빈 문자열
+  recurringId?: string            // 고정비 등록 시 설정
 }
 
 export interface BudgetFormData {
@@ -188,4 +190,39 @@ export interface AssetSnapshot {
   totalLiabilities: number
   netWorth: number    // totalAssets - totalLiabilities
   createdAt: string
+}
+
+// ───── 고정비 ─────
+export type RecurringPeriod = 'monthly' | 'yearly'
+
+export interface RecurringTransaction {
+  id: string
+  name: string
+  type: TransactionType
+  amount: number
+  mainCategory: string
+  subCategory: string
+  period: RecurringPeriod
+  dayOfMonth: number      // 결제일 1~28
+  monthOfYear?: number    // 연간 반복 시 몇 월 (1~12)
+  paymentMethod: PaymentMethod
+  cardAccountId?: string
+  memo: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RecurringFormData {
+  name: string
+  type: TransactionType
+  amount: string
+  mainCategory: string
+  subCategory: string
+  period: RecurringPeriod
+  dayOfMonth: string
+  monthOfYear: string
+  paymentMethod: PaymentMethod
+  cardAccountId: string
+  memo: string
 }

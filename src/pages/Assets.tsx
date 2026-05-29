@@ -11,6 +11,7 @@ import {
 import { Header } from '@/components/layout/Header'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
+import { WidgetContainer } from '@/components/widgets/WidgetContainer'
 import { useAssetStore } from '@/store/assetStore'
 import { formatCurrency } from '@/utils/formatters'
 import type { AssetAccount, AssetType, LiabilityType } from '@/types'
@@ -452,22 +453,10 @@ export function Assets() {
         }
       />
 
-      {/* ── 섹션 1: 순자산 요약 ── */}
+      {/* 순자산 요약 (위젯 밖 — 항상 표시) */}
       <div className="grid grid-cols-3 gap-3">
-        <SummaryCard
-          label="총 자산"
-          amount={totalAssets}
-          colorClass="text-blue-600 dark:text-blue-400"
-          bgClass="bg-blue-50 dark:bg-blue-900/20"
-          icon="🏦"
-        />
-        <SummaryCard
-          label="총 부채"
-          amount={totalLiabilities}
-          colorClass="text-red-600 dark:text-red-400"
-          bgClass="bg-red-50 dark:bg-red-900/20"
-          icon="💳"
-        />
+        <SummaryCard label="총 자산" amount={totalAssets}      colorClass="text-blue-600 dark:text-blue-400"  bgClass="bg-blue-50 dark:bg-blue-900/20"  icon="🏦" />
+        <SummaryCard label="총 부채" amount={totalLiabilities} colorClass="text-red-600 dark:text-red-400"    bgClass="bg-red-50 dark:bg-red-900/20"    icon="💳" />
         <SummaryCard
           label="순자산"
           amount={netWorth}
@@ -477,152 +466,104 @@ export function Assets() {
         />
       </div>
 
-      {/* 순자산 추이 차트 */}
-      {chartData.length > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">순자산 추이</h3>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                tickFormatter={(v: number) =>
-                  v >= 100000000
-                    ? `${(v / 100000000).toFixed(1)}억`
-                    : v >= 10000
-                    ? `${(v / 10000).toFixed(0)}만`
+      <WidgetContainer
+        pageId="assets"
+        widgetMap={{
+          /* 순자산 추이 차트 */
+          'trend-chart': chartData.length > 1 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">순자산 추이</h3>
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) =>
+                    v >= 100000000 ? `${(v / 100000000).toFixed(1)}억`
+                    : v >= 10000   ? `${(v / 10000).toFixed(0)}만`
                     : String(v)
-                }
-              />
-              <Tooltip
-                formatter={(v: number) => [formatCurrency(v), '순자산']}
-                contentStyle={{
-                  backgroundColor: 'var(--tooltip-bg, #fff)',
-                  borderRadius: '12px',
-                  border: '1px solid #e5e7eb',
-                  fontSize: '12px',
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="순자산"
-                stroke="#3b82f6"
-                strokeWidth={2.5}
-                dot={{ r: 4, fill: '#3b82f6' }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+                  } />
+                  <Tooltip formatter={(v: number) => [formatCurrency(v), '순자산']}
+                    contentStyle={{ backgroundColor: 'var(--tooltip-bg, #fff)', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '12px' }}
+                  />
+                  <Line type="monotone" dataKey="순자산" stroke="#3b82f6" strokeWidth={2.5}
+                    dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : null,
 
-      {/* ── 섹션 2: 자산 목록 ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">자산</h3>
-          <button
-            onClick={() => openAdd(false)}
-            className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            자산 추가
-          </button>
-        </div>
-
-        {/* 대시보드 가용자산 표시 설정 */}
-        <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-            💰 대시보드 가용자산 표시
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {ASSET_TYPES.map((type) => {
-              const meta = ASSET_TYPE_META[type]
-              const isActive = dashboardAssetTypes.includes(type)
-              return (
-                <button
-                  key={type}
-                  onClick={() => toggleDashboardAssetType(type)}
-                  className={clsx(
-                    'flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
-                    isActive
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                      : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600'
-                  )}
-                >
-                  <span>{meta.icon}</span>
-                  <span>{type}</span>
+          /* 자산 목록 */
+          'assets-list': (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">자산</h3>
+                <button onClick={() => openAdd(false)} className="flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  자산 추가
                 </button>
-              )
-            })}
-          </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">
-            선택된 유형만 대시보드 가용자산에 합산됩니다
-          </p>
-        </div>
+              </div>
+              <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/40 rounded-xl">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">💰 대시보드 가용자산 표시</p>
+                <div className="flex flex-wrap gap-2">
+                  {ASSET_TYPES.map((type) => {
+                    const meta = ASSET_TYPE_META[type]
+                    const isActive = dashboardAssetTypes.includes(type)
+                    return (
+                      <button key={type} onClick={() => toggleDashboardAssetType(type)}
+                        className={clsx('flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
+                          isActive ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600'
+                        )}
+                      >
+                        <span>{meta.icon}</span><span>{type}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5">선택된 유형만 대시보드 가용자산에 합산됩니다</p>
+              </div>
+              {assetAccounts.length === 0 ? (
+                <EmptyState message="등록된 자산이 없습니다" onAdd={() => openAdd(false)} />
+              ) : (
+                <div className="space-y-4">
+                  {ASSET_TYPES.map((type) => {
+                    const grouped = assetAccounts.filter((a) => a.type === type)
+                    const meta = ASSET_TYPE_META[type]
+                    return <TypeSection key={type} title={type} icon={meta.icon} bgColor={meta.bgColor} accounts={grouped} onEdit={openEdit} onDelete={deleteAccount} />
+                  })}
+                </div>
+              )}
+            </div>
+          ),
 
-        {assetAccounts.length === 0 ? (
-          <EmptyState message="등록된 자산이 없습니다" onAdd={() => openAdd(false)} />
-        ) : (
-          <div className="space-y-4">
-            {ASSET_TYPES.map((type) => {
-              const grouped = assetAccounts.filter((a) => a.type === type)
-              const meta = ASSET_TYPE_META[type]
-              return (
-                <TypeSection
-                  key={type}
-                  title={type}
-                  icon={meta.icon}
-                  bgColor={meta.bgColor}
-                  accounts={grouped}
-                  onEdit={openEdit}
-                  onDelete={deleteAccount}
-                />
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── 섹션 3: 부채 목록 ── */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">부채</h3>
-          <button
-            onClick={() => openAdd(true)}
-            className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            부채 추가
-          </button>
-        </div>
-
-        {liabilityAccounts.length === 0 ? (
-          <EmptyState message="등록된 부채가 없습니다" onAdd={() => openAdd(true)} isLiability />
-        ) : (
-          <div className="space-y-4">
-            {LIABILITY_TYPES.map((type) => {
-              const grouped = liabilityAccounts.filter((a) => a.type === type)
-              const meta = LIABILITY_TYPE_META[type]
-              return (
-                <TypeSection
-                  key={type}
-                  title={type}
-                  icon={meta.icon}
-                  bgColor={meta.bgColor}
-                  accounts={grouped}
-                  onEdit={openEdit}
-                  onDelete={deleteAccount}
-                />
-              )
-            })}
-          </div>
-        )}
-      </div>
+          /* 부채 목록 */
+          'liabilities-list': (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">부채</h3>
+                <button onClick={() => openAdd(true)} className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 transition-colors">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  부채 추가
+                </button>
+              </div>
+              {liabilityAccounts.length === 0 ? (
+                <EmptyState message="등록된 부채가 없습니다" onAdd={() => openAdd(true)} isLiability />
+              ) : (
+                <div className="space-y-4">
+                  {LIABILITY_TYPES.map((type) => {
+                    const grouped = liabilityAccounts.filter((a) => a.type === type)
+                    const meta = LIABILITY_TYPE_META[type]
+                    return <TypeSection key={type} title={type} icon={meta.icon} bgColor={meta.bgColor} accounts={grouped} onEdit={openEdit} onDelete={deleteAccount} />
+                  })}
+                </div>
+              )}
+            </div>
+          ),
+        }}
+      />
 
       {/* 자산/부채 추가·수정 모달 */}
       <Modal

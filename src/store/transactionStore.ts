@@ -156,6 +156,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         updatedAt: now,
         paymentMethod: data.paymentMethod ?? 'cash',
         cardAccountId: data.paymentMethod === 'card' ? (data.cardAccountId || undefined) : undefined,
+        recurringId: data.recurringId,
       }
       const transactions = [newTransaction, ...get().transactions]
       saveToStorage(transactions, pid)

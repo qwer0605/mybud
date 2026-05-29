@@ -132,7 +132,7 @@ export const DEFAULT_PROFILE_ID = 'default'
 /** 프로필별 독립 스토리지 키 반환 */
 export function getProfileStorageKey(
   profileId: string,
-  type: 'transactions' | 'budgets' | 'assets'
+  type: 'transactions' | 'budgets' | 'assets' | 'recurring'
 ): string {
   return `budget_app_${profileId}_${type}`
 }

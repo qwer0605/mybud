@@ -5,6 +5,8 @@ import { Modal } from '@/components/ui/Modal'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
 import { TransactionList } from '@/components/transactions/TransactionList'
 import { TransactionFilterBar } from '@/components/transactions/TransactionFilter'
+import { RecurringSection } from '@/components/recurring/RecurringSection'
+import { WidgetContainer } from '@/components/widgets/WidgetContainer'
 import { useTransactionStore } from '@/store/transactionStore'
 import { useFilteredTransactions } from '@/hooks/useFilteredTransactions'
 import { formatCurrency, getCurrentYearMonth, formatYearMonth } from '@/utils/formatters'
@@ -15,16 +17,13 @@ export function Transactions() {
   const { addTransaction } = useTransactionStore()
   const filtered = useFilteredTransactions(selectedYearMonth)
 
-  const totalIncome = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const totalIncome  = filtered.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const totalExpense = filtered.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
 
-  // 월 이동
   const changeMonth = (delta: number) => {
     const [year, month] = selectedYearMonth.split('-').map(Number)
     const d = new Date(year, month - 1 + delta, 1)
-    setSelectedYearMonth(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    )
+    setSelectedYearMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
 
   const isCurrentMonth = selectedYearMonth === getCurrentYearMonth()
@@ -43,12 +42,9 @@ export function Transactions() {
         }
       />
 
-      {/* 월 선택 */}
+      {/* 월 선택 (위젯 밖 — 항상 표시) */}
       <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
-        <button
-          onClick={() => changeMonth(-1)}
-          className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
-        >
+        <button onClick={() => changeMonth(-1)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -73,21 +69,22 @@ export function Transactions() {
         </button>
       </div>
 
-      {/* 필터 */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
-        <TransactionFilterBar />
-      </div>
+      <WidgetContainer
+        pageId="transactions"
+        widgetMap={{
+          recurring: <RecurringSection yearMonth={selectedYearMonth} />,
+          filter: (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+              <TransactionFilterBar />
+            </div>
+          ),
+          list: <TransactionList yearMonth={selectedYearMonth} />,
+        }}
+      />
 
-      {/* 거래 목록 */}
-      <TransactionList yearMonth={selectedYearMonth} />
-
-      {/* 추가 모달 */}
       <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="거래 추가">
         <TransactionForm
-          onSubmit={(data) => {
-            addTransaction(data)
-            setIsAddOpen(false)
-          }}
+          onSubmit={(data) => { addTransaction(data); setIsAddOpen(false) }}
           onCancel={() => setIsAddOpen(false)}
         />
       </Modal>
