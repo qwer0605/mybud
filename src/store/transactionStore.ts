@@ -16,27 +16,36 @@ import { useAssetStore } from '@/store/assetStore'
 // ───── 계좌 잔액 연동 헬퍼 ─────
 // sign: +1 = 거래 발생, -1 = 거래 취소(역산)
 function syncLinkedAccountBalance(transaction: Transaction, sign: 1 | -1) {
-  const accountId = transaction.cardAccountId
-  if (!accountId) return
+  const { accounts, adjustAccountAmount } = useAssetStore.getState()
 
-  const account = useAssetStore.getState().accounts.find((a) => a.id === accountId)
-  if (!account) return
-
-  let delta: number
-  if (transaction.type === 'expense') {
-    // 부채 계좌(신용카드): 지출 시 잔액 증가(미결제 누적)
-    // 자산 계좌(통장/현금): 지출 시 잔액 감소
-    delta = account.isLiability
-      ? transaction.amount * sign
-      : -transaction.amount * sign
-  } else {
-    // 수입: 자산 계좌 증가, 부채 계좌 감소(상환)
-    delta = account.isLiability
-      ? -transaction.amount * sign
-      : transaction.amount * sign
+  // ── 출금/카드 계좌 ──
+  const fromId = transaction.cardAccountId
+  if (fromId) {
+    const account = accounts.find((a) => a.id === fromId)
+    if (account) {
+      let delta: number
+      if (transaction.type === 'expense') {
+        // 부채 계좌(신용카드): 지출 시 잔액 증가(미결제 누적)
+        // 자산 계좌: 지출 시 잔액 감소
+        delta = account.isLiability
+          ? transaction.amount * sign
+          : -transaction.amount * sign
+      } else {
+        // 수입: 자산 계좌 증가, 부채 계좌 감소(상환)
+        delta = account.isLiability
+          ? -transaction.amount * sign
+          : transaction.amount * sign
+      }
+      adjustAccountAmount(fromId, delta)
+    }
   }
 
-  useAssetStore.getState().adjustAccountAmount(accountId, delta)
+  // ── 입금 계좌 (계좌이체 수신 측) ──
+  const toId = transaction.toAccountId
+  if (toId && transaction.paymentMethod === 'transfer') {
+    // 수신 계좌는 이체 금액만큼 항상 증가 (sign=1) / 감소 (sign=-1)
+    adjustAccountAmount(toId, transaction.amount * sign)
+  }
 }
 
 // ───── Firestore 동기화 헬퍼 ─────
@@ -155,7 +164,8 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         createdAt: now,
         updatedAt: now,
         paymentMethod: data.paymentMethod ?? 'cash',
-        cardAccountId: data.paymentMethod === 'card' ? (data.cardAccountId || undefined) : undefined,
+        cardAccountId: data.paymentMethod !== 'cash' ? (data.cardAccountId || undefined) : undefined,
+        toAccountId: data.paymentMethod === 'transfer' ? (data.toAccountId || undefined) : undefined,
         recurringId: data.recurringId,
       }
       const transactions = [newTransaction, ...get().transactions]
@@ -182,7 +192,8 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         date: data.date,
         updatedAt: now,
         paymentMethod: data.paymentMethod ?? 'cash',
-        cardAccountId: data.paymentMethod === 'card' ? (data.cardAccountId || undefined) : undefined,
+        cardAccountId: data.paymentMethod !== 'cash' ? (data.cardAccountId || undefined) : undefined,
+        toAccountId: data.paymentMethod === 'transfer' ? (data.toAccountId || undefined) : undefined,
       }
       const transactions = get().transactions.map((t) => t.id === id ? updated : t)
       saveToStorage(transactions, pid)

@@ -85,7 +85,8 @@ export interface Transaction {
   createdAt: string
   updatedAt: string
   paymentMethod?: PaymentMethod   // 결제수단 (없으면 현금으로 간주)
-  cardAccountId?: string          // 카드 선택 시 연결된 자산계좌 id
+  cardAccountId?: string          // 출금/카드 계좌 id
+  toAccountId?: string            // 계좌이체 수신 계좌 id (transfer일 때만)
   recurringId?: string            // 고정비 자동 등록 시 RecurringTransaction id
 }
 
@@ -136,7 +137,8 @@ export interface TransactionFormData {
   memo: string
   date: string
   paymentMethod: PaymentMethod    // 결제수단 (기본 'cash')
-  cardAccountId: string           // 카드 선택 시 계좌 id, 아니면 빈 문자열
+  cardAccountId: string           // 출금/카드 계좌 id, 없으면 빈 문자열
+  toAccountId: string             // 계좌이체 수신 계좌 id, 없으면 빈 문자열
   recurringId?: string            // 고정비 등록 시 설정
 }
 

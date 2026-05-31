@@ -55,6 +55,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   const [cardAccountId, setCardAccountId] = useState<string>(
     initial?.cardAccountId ?? getDefaultAccountId(initType, initMethod, accounts)
   )
+  const [toAccountId, setToAccountId] = useState<string>(initial?.toAccountId ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // 유형(수입/지출) 변경
@@ -63,6 +64,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
     if (t === 'income') {
       setPaymentMethod('cash')
       setCardAccountId(getDefaultAccountId('income', 'cash', accounts))
+      setToAccountId('')
     } else {
       setCardAccountId(getDefaultAccountId('expense', paymentMethod, accounts))
     }
@@ -72,6 +74,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method)
     setCardAccountId(getDefaultAccountId('expense', method, accounts))
+    if (method !== 'transfer') setToAccountId('')
   }
 
   const categoryTree       = type === 'expense' ? expenseTree : incomeTree
@@ -118,7 +121,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-    onSubmit({ type, amount, mainCategory, subCategory, memo, date, paymentMethod, cardAccountId })
+    onSubmit({ type, amount, mainCategory, subCategory, memo, date, paymentMethod, cardAccountId, toAccountId })
   }
 
   const currentSubCategories = categoryTree[mainCategory] ?? []
@@ -248,19 +251,31 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
             ))}
           </div>
           {accounts.length > 0 && (
-            <AccountSelector
-              label={paymentMethod === 'card' ? '카드 선택' : '출금 계좌'}
-              accounts={accounts}
-              value={cardAccountId}
-              onChange={setCardAccountId}
-              hint={
-                linkedAccount
-                  ? linkedAccount.isLiability
-                    ? '💳 카드 미결제 잔액이 증가합니다'
-                    : '🏦 계좌 잔액이 차감됩니다'
-                  : undefined
-              }
-            />
+            <div className="space-y-2">
+              <AccountSelector
+                label={paymentMethod === 'card' ? '카드 선택' : '출금 계좌'}
+                accounts={accounts}
+                value={cardAccountId}
+                onChange={setCardAccountId}
+                hint={
+                  linkedAccount
+                    ? linkedAccount.isLiability
+                      ? '💳 카드 미결제 잔액이 증가합니다'
+                      : '🏦 계좌 잔액이 차감됩니다'
+                    : undefined
+                }
+              />
+              {paymentMethod === 'transfer' && (
+                <AccountSelector
+                  label="입금 계좌"
+                  accounts={accounts.filter((a) => !a.isLiability && a.id !== cardAccountId)}
+                  value={toAccountId}
+                  onChange={setToAccountId}
+                  hint={toAccountId ? '💰 이체 금액이 계좌 잔액에 추가됩니다' : undefined}
+                  hintColor="green"
+                />
+              )}
+            </div>
           )}
         </div>
       )}

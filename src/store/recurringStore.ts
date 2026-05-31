@@ -145,6 +145,7 @@ export const useRecurringStore = create<RecurringState>((set, get) => {
           date,
           paymentMethod: r.paymentMethod,
           cardAccountId: r.cardAccountId ?? '',
+          toAccountId: '',
           recurringId: r.id,
         })
         count++
