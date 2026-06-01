@@ -271,19 +271,148 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
   )
 }
 
+// ───── 카드 납부 모달 ─────
+interface CardPaymentModalProps {
+  card: AssetAccount
+  accounts: AssetAccount[]
+  onClose: () => void
+}
+
+function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
+  const { payCardBill } = useAssetStore()
+  const assetAccounts = accounts.filter((a) => !a.isLiability)
+  const [fromId, setFromId] = useState(assetAccounts[0]?.id ?? '')
+  const [amountStr, setAmountStr] = useState(
+    card.amount > 0 ? card.amount.toLocaleString('ko-KR') : ''
+  )
+  const [error, setError] = useState('')
+
+  const fromAccount = assetAccounts.find((a) => a.id === fromId)
+  const amount = parseInt(amountStr.replace(/[^0-9]/g, '')) || 0
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!fromId) { setError('출금 계좌를 선택해주세요'); return }
+    if (amount <= 0) { setError('납부 금액을 입력해주세요'); return }
+    if (fromAccount && amount > fromAccount.amount) {
+      setError('출금 계좌 잔액이 부족합니다'); return
+    }
+    payCardBill(card.id, fromId, amount)
+    onClose()
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {/* 카드 정보 */}
+      <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-xl">
+        <span className="text-xl">💳</span>
+        <div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">{card.name}</p>
+          <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+            미결제 잔액 {formatCurrency(card.amount)}
+          </p>
+        </div>
+      </div>
+
+      {/* 출금 계좌 */}
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 block">
+          출금 계좌
+        </label>
+        {assetAccounts.length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500">등록된 자산 계좌가 없습니다</p>
+        ) : (
+          <select
+            value={fromId}
+            onChange={(e) => { setFromId(e.target.value); setError('') }}
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {assetAccounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                🏦 {a.name} ({formatCurrency(a.amount)})
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* 납부 금액 */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">납부 금액</label>
+          {card.amount > 0 && (
+            <button
+              type="button"
+              onClick={() => { setAmountStr(card.amount.toLocaleString('ko-KR')); setError('') }}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              전액 ({formatCurrency(card.amount)})
+            </button>
+          )}
+        </div>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₩</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={amountStr}
+            onChange={(e) => {
+              const num = e.target.value.replace(/[^0-9]/g, '')
+              setAmountStr(num ? Number(num).toLocaleString('ko-KR') : '')
+              setError('')
+            }}
+            placeholder="0"
+            autoFocus
+            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        {/* 납부 후 잔액 미리보기 */}
+        {amount > 0 && fromAccount && (
+          <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+            납부 후 →&nbsp;
+            <span className="font-medium text-gray-600 dark:text-gray-300">{card.name}</span>
+            &nbsp;{formatCurrency(Math.max(0, card.amount - amount))}&nbsp;/&nbsp;
+            <span className="font-medium text-gray-600 dark:text-gray-300">{fromAccount.name}</span>
+            &nbsp;{formatCurrency(fromAccount.amount - amount)}
+          </p>
+        )}
+      </div>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <div className="flex gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        >
+          취소
+        </button>
+        <button
+          type="submit"
+          disabled={assetAccounts.length === 0}
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          납부하기
+        </button>
+      </div>
+    </form>
+  )
+}
+
 // ───── 계좌 항목 행 ─────
 interface AccountRowProps {
   account: AssetAccount
   onEdit: () => void
   onDelete: () => void
+  onPay?: () => void
 }
 
-function AccountRow({ account, onEdit, onDelete }: AccountRowProps) {
+function AccountRow({ account, onEdit, onDelete, onPay }: AccountRowProps) {
   const meta = account.isLiability
     ? LIABILITY_TYPE_META[account.type as LiabilityType]
     : ASSET_TYPE_META[account.type as AssetType]
 
-  // 기초잔액과 현재잔액이 다를 때만 기초잔액 표시
   const showInitial =
     account.initialAmount !== undefined &&
     account.initialAmount !== account.amount
@@ -312,7 +441,6 @@ function AccountRow({ account, onEdit, onDelete }: AccountRowProps) {
         )}>
           {account.isLiability ? '-' : ''}{formatCurrency(account.amount)}
         </span>
-        {/* initialAmount가 설정된 계좌는 '현재실금액' 레이블 표시 */}
         {account.initialAmount !== undefined && (
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             {showInitial ? '현재실금액' : '실금액'}
@@ -320,6 +448,16 @@ function AccountRow({ account, onEdit, onDelete }: AccountRowProps) {
         )}
       </div>
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        {/* 카드 납부 버튼 (부채 계좌만) */}
+        {onPay && account.amount > 0 && (
+          <button
+            onClick={onPay}
+            className="px-2 py-1 rounded-lg text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+            title="카드 납부"
+          >
+            납부
+          </button>
+        )}
         <button
           onClick={onEdit}
           className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
@@ -351,9 +489,10 @@ interface TypeSectionProps {
   accounts: AssetAccount[]
   onEdit: (a: AssetAccount) => void
   onDelete: (id: string) => void
+  onPay?: (a: AssetAccount) => void
 }
 
-function TypeSection({ title, icon, bgColor, accounts, onEdit, onDelete }: TypeSectionProps) {
+function TypeSection({ title, icon, bgColor, accounts, onEdit, onDelete, onPay }: TypeSectionProps) {
   if (accounts.length === 0) return null
   const total = accounts.reduce((s, a) => s + a.amount, 0)
   return (
@@ -373,6 +512,7 @@ function TypeSection({ title, icon, bgColor, accounts, onEdit, onDelete }: TypeS
             key={a.id}
             account={a}
             onEdit={() => onEdit(a)}
+            onPay={onPay ? () => onPay(a) : undefined}
             onDelete={() => {
               if (confirm(`'${a.name}'을 삭제할까요?`)) onDelete(a.id)
             }}
@@ -394,6 +534,7 @@ export function Assets() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<AssetAccount | undefined>()
   const [transferOpen, setTransferOpen] = useState(false)
+  const [payTarget, setPayTarget] = useState<AssetAccount | undefined>()
 
   const totalAssets = getTotalAssets()
   const totalLiabilities = getTotalLiabilities()
@@ -556,7 +697,18 @@ export function Assets() {
                   {LIABILITY_TYPES.map((type) => {
                     const grouped = liabilityAccounts.filter((a) => a.type === type)
                     const meta = LIABILITY_TYPE_META[type]
-                    return <TypeSection key={type} title={type} icon={meta.icon} bgColor={meta.bgColor} accounts={grouped} onEdit={openEdit} onDelete={deleteAccount} />
+                    return (
+                      <TypeSection
+                        key={type}
+                        title={type}
+                        icon={meta.icon}
+                        bgColor={meta.bgColor}
+                        accounts={grouped}
+                        onEdit={openEdit}
+                        onDelete={deleteAccount}
+                        onPay={(a) => setPayTarget(a)}
+                      />
+                    )
                   })}
                 </div>
               )}
@@ -592,6 +744,17 @@ export function Assets() {
           onClose={() => setTransferOpen(false)}
         />
       </Modal>
+
+      {/* 카드 납부 모달 */}
+      {payTarget && (
+        <Modal isOpen onClose={() => setPayTarget(undefined)} title="카드 납부">
+          <CardPaymentModal
+            card={payTarget}
+            accounts={accounts}
+            onClose={() => setPayTarget(undefined)}
+          />
+        </Modal>
+      )}
     </div>
   )
 }

@@ -121,6 +121,9 @@ interface AssetState {
   /** 계좌 간 이체 (fromId → toId, amount 차감/추가) */
   transferBetweenAccounts: (fromId: string, toId: string, amount: number) => void
 
+  /** 카드 납부: 출금 계좌 감소 + 카드 부채 감소 */
+  payCardBill: (cardId: string, fromAccountId: string, amount: number) => void
+
   /** 카드 거래 연동 시 잔액 delta 조정 (카드 지출 +, 거래 취소 -) */
   adjustAccountAmount: (id: string, delta: number) => void
 
@@ -270,6 +273,23 @@ export const useAssetStore = create<AssetState>((set, get) => {
       const toUpdated   = accounts.find((a) => a.id === toId)
       if (fromUpdated) fireSync(pid, fromId, fromUpdated as unknown as Record<string, unknown>)
       if (toUpdated)   fireSync(pid, toId,   toUpdated   as unknown as Record<string, unknown>)
+    },
+
+    payCardBill: (cardId, fromAccountId, amount) => {
+      const pid = getActiveProfileId()
+      const now = new Date().toISOString()
+      const accounts = get().accounts.map((a) => {
+        if (a.id === cardId)        return { ...a, amount: a.amount - amount, updatedAt: now }
+        if (a.id === fromAccountId) return { ...a, amount: a.amount - amount, updatedAt: now }
+        return a
+      })
+      saveAccounts(accounts, pid)
+      set({ accounts })
+      get().saveSnapshot()
+      const cardUpdated = accounts.find((a) => a.id === cardId)
+      const fromUpdated = accounts.find((a) => a.id === fromAccountId)
+      if (cardUpdated) fireSync(pid, cardId, cardUpdated as unknown as Record<string, unknown>)
+      if (fromUpdated) fireSync(pid, fromAccountId, fromUpdated as unknown as Record<string, unknown>)
     },
 
     adjustAccountAmount: (id, delta) => {
