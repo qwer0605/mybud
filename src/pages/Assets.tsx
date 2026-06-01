@@ -13,7 +13,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { WidgetContainer } from '@/components/widgets/WidgetContainer'
 import { useAssetStore } from '@/store/assetStore'
-import { formatCurrency } from '@/utils/formatters'
+import { useTransactionStore } from '@/store/transactionStore'
+import { formatCurrency, getTodayString } from '@/utils/formatters'
 import type { AssetAccount, AssetType, LiabilityType } from '@/types'
 import clsx from 'clsx'
 
@@ -280,6 +281,7 @@ interface CardPaymentModalProps {
 
 function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
   const { payCardBill } = useAssetStore()
+  const { addTransaction } = useTransactionStore()
   const assetAccounts = accounts.filter((a) => !a.isLiability)
   const [fromId, setFromId] = useState(assetAccounts[0]?.id ?? '')
   const [amountStr, setAmountStr] = useState(
@@ -297,7 +299,20 @@ function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
     if (fromAccount && amount > fromAccount.amount) {
       setError('출금 계좌 잔액이 부족합니다'); return
     }
+    // 잔액 처리: 카드 부채 감소 + 출금 계좌 감소
     payCardBill(card.id, fromId, amount)
+    // 거래 내역 기록 (계좌 연동 없이 — 잔액은 이미 위에서 처리)
+    addTransaction({
+      type: 'expense',
+      amount: String(amount),
+      mainCategory: '기타',
+      subCategory: '기타',
+      memo: `카드 납부 · ${card.name}`,
+      date: getTodayString(),
+      paymentMethod: 'transfer',
+      cardAccountId: '',
+      toAccountId: '',
+    })
     onClose()
   }
 
