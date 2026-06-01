@@ -38,7 +38,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       {/* 오버레이 */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -49,7 +49,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       {/* 모달 컨테이너 */}
       <div
         className={clsx(
-          'relative w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl',
+          'relative w-full flex flex-col',
+          'bg-white dark:bg-gray-800 shadow-2xl',
+          'rounded-t-2xl sm:rounded-2xl',
+          'max-h-[92vh] sm:max-h-[88vh]',
           'animate-in slide-in-from-bottom-4 duration-200',
           sizeClasses[size]
         )}
@@ -57,8 +60,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
       >
+        {/* 헤더 — 고정 */}
         {title && (
-          <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
             <h2
               id="modal-title"
               className="text-lg font-semibold text-gray-900 dark:text-white"
@@ -71,17 +75,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
               aria-label="닫기"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
         )}
-        <div className="p-5">{children}</div>
+
+        {/* 내용 — 스크롤 */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {children}
+        </div>
       </div>
     </div>
   )
