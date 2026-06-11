@@ -4,6 +4,8 @@ import { useCategoryStore } from '@/store/categoryStore'
 import { useAssetStore } from '@/store/assetStore'
 import { getTodayString, formatAmountInput } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
+import { CategoryMainEditor } from '@/components/categories/CategoryMainEditor'
+import { SubCategoryChips } from '@/components/categories/SubCategoryChips'
 import clsx from 'clsx'
 
 const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] = [
@@ -58,9 +60,21 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   const [toAccountId, setToAccountId] = useState<string>(initial?.toAccountId ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // 대분류 추가/수정 인라인 패널
+  const [mainEditorOpen, setMainEditorOpen] = useState(false)
+  const [editingMainCat, setEditingMainCat] = useState<string | null>(null) // null = 추가 모드
+
   // 유형(수입/지출) 변경
   const handleTypeChange = (t: TransactionType) => {
     setType(t)
+    setMainEditorOpen(false)
+    setEditingMainCat(null)
+    if (!initial) {
+      const tree = t === 'expense' ? expenseTree : incomeTree
+      const first = Object.keys(tree)[0] ?? ''
+      setMainCategory(first)
+      setSubCategory(tree[first]?.[0] ?? '')
+    }
     if (t === 'income') {
       setPaymentMethod('cash')
       setCardAccountId(getDefaultAccountId('income', 'cash', accounts))
@@ -83,17 +97,6 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   const firstMain          = mainCategories[0] ?? ''
   const firstSub           = firstMain ? (categoryTree[firstMain]?.[0] ?? '') : ''
 
-  // 유형 변경 시 카테고리 리셋
-  useEffect(() => {
-    if (!initial) {
-      const tree = type === 'expense' ? expenseTree : incomeTree
-      const cats = Object.keys(tree)
-      const first = cats[0] ?? ''
-      setMainCategory(first)
-      setSubCategory(tree[first]?.[0] ?? '')
-    }
-  }, [type, initial, expenseTree, incomeTree])
-
   // 초기 대분류가 없으면 첫 번째로 설정
   useEffect(() => {
     if (!initial && !mainCategory && firstMain) {
@@ -101,6 +104,15 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
       setSubCategory(firstSub)
     }
   }, [firstMain, firstSub, mainCategory, initial])
+
+  // 대분류의 소분류 목록이 바뀌어 현재 선택값이 더 이상 유효하지 않으면 첫 번째 소분류로 보정
+  useEffect(() => {
+    if (!mainCategory) return
+    const subs = categoryTree[mainCategory] ?? []
+    if (!subs.includes(subCategory)) {
+      setSubCategory(subs[0] ?? '')
+    }
+  }, [mainCategory, categoryTree, subCategory])
 
   // 대분류 변경 시 소분류 첫 번째로 리셋
   const handleMainCategoryChange = (main: string) => {
@@ -176,20 +188,51 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
         {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount}</p>}
       </div>
 
+      {/* 날짜 */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+          날짜 <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          className={clsx(
+            'w-full px-4 py-3 rounded-xl border',
+            'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
+            errors.date ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
+          )}
+        />
+        {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
+      </div>
+
+      {/* 메모 */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">메모</label>
+        <input
+          type="text"
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          placeholder="간단한 메모를 입력하세요"
+          maxLength={100}
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+        />
+      </div>
+
       {/* 대분류 선택 */}
-      {mainCategories.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">대분류</label>
-          <div className="grid grid-cols-4 gap-2">
-            {mainCategories.map((cat) => {
-              const m = mainCategoryMeta[cat]
-              return (
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">대분류</label>
+        <div className="grid grid-cols-4 gap-2">
+          {mainCategories.map((cat) => {
+            const m = mainCategoryMeta[cat]
+            return (
+              <div key={cat} className="relative">
                 <button
-                  key={cat}
                   type="button"
                   onClick={() => handleMainCategoryChange(cat)}
                   className={clsx(
-                    'flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
+                    'w-full flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
                     mainCategory === cat
                       ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
                       : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
@@ -198,35 +241,85 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
                   <span className="text-xl">{m?.icon ?? '📦'}</span>
                   <span className="leading-tight text-center break-keep">{cat}</span>
                 </button>
-              )
-            })}
-          </div>
+                <button
+                  type="button"
+                  onClick={() => { setEditingMainCat(cat); setMainEditorOpen(true) }}
+                  title="수정"
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-blue-500 shadow-sm transition-colors"
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+              </div>
+            )
+          })}
+
+          {/* 대분류 추가 타일 */}
+          <button
+            type="button"
+            onClick={() => { setEditingMainCat(null); setMainEditorOpen(true) }}
+            className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-xs font-medium border-2 border-dashed border-blue-300 dark:border-blue-700 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+          >
+            <span className="text-xl">+</span>
+            <span>대분류 추가</span>
+          </button>
         </div>
-      )}
+
+        {/* 대분류 추가/수정 인라인 패널 */}
+        {mainEditorOpen && (
+          <div className="mt-3 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
+            <CategoryMainEditor
+              key={editingMainCat ?? '__new__'}
+              type={type}
+              editingMain={editingMainCat}
+              onCancel={() => { setMainEditorOpen(false); setEditingMainCat(null) }}
+              onSaved={(finalName) => {
+                if (editingMainCat === null || editingMainCat === mainCategory) {
+                  setMainCategory(finalName)
+                }
+                setMainEditorOpen(false)
+                setEditingMainCat(null)
+              }}
+              onDeleted={() => {
+                if (editingMainCat === mainCategory) {
+                  const remaining = mainCategories.filter((c) => c !== editingMainCat)
+                  setMainCategory(remaining[0] ?? '')
+                }
+                setMainEditorOpen(false)
+                setEditingMainCat(null)
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* 소분류 선택 */}
-      {currentSubCategories.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">소분류</label>
-          <div className="flex flex-wrap gap-2">
-            {currentSubCategories.map((sub) => (
-              <button
-                key={sub}
-                type="button"
-                onClick={() => setSubCategory(sub)}
-                className={clsx(
-                  'px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 border',
-                  subCategory === sub
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400'
-                )}
-              >
-                {sub}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">소분류</label>
+        {mainCategory ? (
+          <SubCategoryChips
+            type={type}
+            mainCategory={mainCategory}
+            subs={currentSubCategories}
+            selectable
+            selectedSub={subCategory}
+            onSelect={setSubCategory}
+            onSubRenamed={(oldName, newName) => {
+              if (subCategory === oldName) setSubCategory(newName)
+            }}
+            onSubDeleted={(name) => {
+              if (subCategory === name) {
+                const remaining = currentSubCategories.filter((s) => s !== name)
+                setSubCategory(remaining[0] ?? '')
+              }
+            }}
+          />
+        ) : (
+          <p className="text-xs text-gray-400 dark:text-gray-500">대분류를 먼저 선택해주세요</p>
+        )}
+      </div>
 
       {/* ── 결제수단 + 계좌 연동 ── */}
       {type === 'expense' && (
@@ -293,38 +386,6 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           />
         </div>
       )}
-
-      {/* 날짜 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          날짜 <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className={clsx(
-            'w-full px-4 py-3 rounded-xl border',
-            'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
-            errors.date ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
-          )}
-        />
-        {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
-      </div>
-
-      {/* 메모 */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">메모</label>
-        <input
-          type="text"
-          value={memo}
-          onChange={(e) => setMemo(e.target.value)}
-          placeholder="간단한 메모를 입력하세요"
-          maxLength={100}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
-        />
-      </div>
 
       {/* 버튼 */}
       <div className="flex gap-3 pt-2">
