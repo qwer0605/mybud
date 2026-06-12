@@ -57,7 +57,7 @@ export const useRecurringStore = create<RecurringState>((set, get) => {
         dayOfMonth: parseInt(data.dayOfMonth) || 1,
         monthOfYear: data.period === 'yearly' ? (parseInt(data.monthOfYear) || 1) : undefined,
         paymentMethod: data.paymentMethod,
-        cardAccountId: data.paymentMethod === 'card' ? (data.cardAccountId || undefined) : undefined,
+        cardAccountId: (data.type === 'income' || data.paymentMethod !== 'cash') ? (data.cardAccountId || undefined) : undefined,
         memo: data.memo,
         isActive: true,
         createdAt: now,
@@ -85,7 +85,7 @@ export const useRecurringStore = create<RecurringState>((set, get) => {
               dayOfMonth: parseInt(data.dayOfMonth) || 1,
               monthOfYear: data.period === 'yearly' ? (parseInt(data.monthOfYear) || 1) : undefined,
               paymentMethod: data.paymentMethod,
-              cardAccountId: data.paymentMethod === 'card' ? (data.cardAccountId || undefined) : undefined,
+              cardAccountId: (data.type === 'income' || data.paymentMethod !== 'cash') ? (data.cardAccountId || undefined) : undefined,
               memo: data.memo,
               updatedAt: now,
             }

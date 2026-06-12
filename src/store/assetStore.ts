@@ -301,6 +301,7 @@ export const useAssetStore = create<AssetState>((set, get) => {
       )
       saveAccounts(accounts, pid)
       set({ accounts })
+      get().saveSnapshot()
       const updated = accounts.find((a) => a.id === id)
       if (updated) fireSync(pid, id, updated as unknown as Record<string, unknown>)
     },

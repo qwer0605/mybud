@@ -45,7 +45,7 @@ export function TransactionList({ yearMonth, limit }: TransactionListProps) {
             .reduce((sum, t) => sum + t.amount, 0)
 
           return (
-            <div key={date} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div key={date} className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
               {/* 날짜 헤더 */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-700/30">
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">

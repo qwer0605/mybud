@@ -19,7 +19,7 @@ export function AuthButton({ layout = 'sidebar' }: AuthButtonProps) {
         'flex items-center gap-2',
         layout === 'sidebar' ? 'px-3 py-2.5' : 'px-2 py-1.5'
       )}>
-        <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-600 border-t-primary-400 rounded-full animate-spin" />
         <span className="text-xs text-gray-400 dark:text-gray-500">로딩 중...</span>
       </div>
     )
@@ -75,7 +75,7 @@ export function AuthButton({ layout = 'sidebar' }: AuthButtonProps) {
             className="w-7 h-7 rounded-full flex-shrink-0 border border-gray-200 dark:border-gray-600"
           />
         ) : (
-          <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             {(user.displayName ?? user.email ?? '?')[0].toUpperCase()}
           </div>
         )}

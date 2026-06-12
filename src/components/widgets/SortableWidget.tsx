@@ -34,7 +34,7 @@ export function SortableWidget({ id, pageId, visible, isEditing, children }: Sor
       )}
     >
       {/* ─── 드래그 바 ─── */}
-      <div className="flex items-center gap-2 bg-blue-600 dark:bg-blue-700 px-3 py-2.5">
+      <div className="flex items-center gap-2 bg-primary-500 dark:bg-primary-700 px-3 py-2.5">
         {/* 드래그 핸들 */}
         <button
           {...attributes}

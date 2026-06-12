@@ -3,6 +3,7 @@ import clsx from 'clsx'
 import { useSettingsStore } from '@/store/settingsStore'
 import { ProfileSwitcher } from './ProfileSwitcher'
 import { AuthButton } from '@/components/auth/AuthButton'
+import { AppVersion } from './AppVersion'
 
 const navItems = [
   {
@@ -103,7 +104,7 @@ export function Sidebar() {
       {/* 로고 */}
       <div className="p-6 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
+          <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
             ₩
           </div>
           <div>
@@ -129,7 +130,7 @@ export function Sidebar() {
               clsx(
                 'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400'
+                  ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400'
                   : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100'
               )
             }
@@ -176,6 +177,8 @@ export function Sidebar() {
             </>
           )}
         </button>
+
+        <AppVersion className="pt-1" />
       </div>
     </aside>
   )

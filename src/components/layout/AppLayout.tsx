@@ -48,7 +48,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             className={({ isActive }) =>
               `p-2 rounded-lg transition-colors ${
                 isActive
-                  ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30'
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30'
                   : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`
             }

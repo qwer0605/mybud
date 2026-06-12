@@ -57,9 +57,9 @@ export function BalanceLineChart({ data }: BalanceLineChartProps) {
         <Line
           type="monotone"
           dataKey="잔액"
-          stroke="#3b82f6"
+          stroke="#f97316"
           strokeWidth={2.5}
-          dot={{ fill: '#3b82f6', r: 4, strokeWidth: 2, stroke: '#fff' }}
+          dot={{ fill: '#f97316', r: 4, strokeWidth: 2, stroke: '#fff' }}
           activeDot={{ r: 6 }}
         />
       </LineChart>

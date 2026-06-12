@@ -72,6 +72,16 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
     setSubCategory(categoryTree[main]?.[0] ?? '')
   }
 
+  const handleTypeChange = (t: TransactionType) => {
+    setType(t)
+    if (t === 'income') {
+      setPaymentMethod('cash')
+      setCardAccountId(accounts.find((a) => !a.isLiability)?.id ?? '')
+    } else {
+      setCardAccountId('')
+    }
+  }
+
   const validate = () => {
     const errs: Record<string, string> = {}
     if (!name.trim()) errs.name = '이름을 입력해주세요'
@@ -108,7 +118,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
           <button
             key={t}
             type="button"
-            onClick={() => setType(t)}
+            onClick={() => handleTypeChange(t)}
             className={clsx(
               'flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-150',
               type === t
@@ -137,7 +147,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
           className={clsx(
             'w-full px-4 py-3 rounded-xl border',
             'bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
+            'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
             errors.name ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
           )}
         />
@@ -160,7 +170,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
             className={clsx(
               'w-full pl-8 pr-4 py-3 rounded-xl border text-right text-lg font-semibold',
               'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-              'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
+              'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
               errors.amount ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
             )}
           />
@@ -183,7 +193,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                   className={clsx(
                     'flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
                     mainCategory === cat
-                      ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                      ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
                       : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
                   )}
                 >
@@ -209,8 +219,8 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                 className={clsx(
                   'px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 border',
                   subCategory === sub
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400'
+                    ? 'bg-primary-500 text-white border-primary-500'
+                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400'
                 )}
               >
                 {sub}
@@ -232,7 +242,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
               className={clsx(
                 'flex-1 py-2 rounded-xl text-sm font-medium transition-all border',
                 period === p
-                  ? 'bg-blue-600 text-white border-blue-600'
+                  ? 'bg-primary-500 text-white border-primary-500'
                   : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600'
               )}
             >
@@ -250,7 +260,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
             <select
               value={monthOfYear}
               onChange={(e) => setMonthOfYear(e.target.value)}
-              className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
             >
               {MONTHS.map((m, i) => (
                 <option key={i + 1} value={i + 1}>{m}</option>
@@ -260,7 +270,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
           <select
             value={dayOfMonth}
             onChange={(e) => setDayOfMonth(e.target.value)}
-            className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
           >
             {DAYS.map((d) => (
               <option key={d} value={d}>{d}일</option>
@@ -282,7 +292,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                 className={clsx(
                   'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium border transition-all',
                   paymentMethod === m.value
-                    ? 'bg-blue-600 text-white border-blue-600'
+                    ? 'bg-primary-500 text-white border-primary-500'
                     : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600'
                 )}
               >
@@ -295,7 +305,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
             <select
               value={cardAccountId}
               onChange={(e) => setCardAccountId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
             >
               <option value="">연동 안함</option>
               {accounts.map((a) => (
@@ -304,6 +314,30 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                 </option>
               ))}
             </select>
+          )}
+        </div>
+      )}
+
+      {/* 입금 계좌 (수입) */}
+      {type === 'income' && accounts.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">입금 계좌</label>
+          <select
+            value={cardAccountId}
+            onChange={(e) => setCardAccountId(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+          >
+            <option value="">연동 안함</option>
+            {accounts.filter((a) => !a.isLiability).map((a) => (
+              <option key={a.id} value={a.id}>
+                🏦 {a.name}
+              </option>
+            ))}
+          </select>
+          {cardAccountId && (
+            <p className="mt-1 text-xs text-green-500 dark:text-green-400">
+              💰 등록 시 수입 금액이 계좌 잔액에 추가됩니다
+            </p>
           )}
         </div>
       )}
@@ -317,7 +351,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
           onChange={(e) => setMemo(e.target.value)}
           placeholder="간단한 메모 (선택)"
           maxLength={100}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow"
         />
       </div>
 

@@ -67,7 +67,7 @@ export function BottomNav() {
               clsx(
                 'flex flex-col items-center gap-1 px-4 py-1.5 rounded-xl text-xs font-medium transition-colors min-w-0',
                 isActive
-                  ? 'text-blue-600 dark:text-blue-400'
+                  ? 'text-primary-500 dark:text-primary-400'
                   : 'text-gray-500 dark:text-gray-400'
               )
             }

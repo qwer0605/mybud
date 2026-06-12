@@ -15,6 +15,8 @@ import {
   downloadProfileList,
   downloadCategories,
   upsertCategories,
+  subscribeRealtime,
+  unsubscribeRealtime,
 } from '@/firebase/syncService'
 import { PROFILE_STORAGE_KEY, CURRENT_PROFILE_KEY, getProfileStorageKey } from '@/utils/constants'
 import { CATEGORY_STORAGE_KEY } from '@/store/categoryStore'
@@ -115,6 +117,9 @@ export const useAuthStore = create<AuthState>((set) => {
 
       set({ user, isLoading: false })
 
+      // 실시간 크로스 디바이스 동기화 구독
+      subscribeRealtime(user.uid, profiles, notifyStoresReload)
+
       // 로컬 데이터 → Firestore 전체 업로드 (신규 기기 / 최초 로그인)
       if (!hasCloudData) {
         uploadToFirestore(user.uid, profiles).catch(() => {})
@@ -122,6 +127,8 @@ export const useAuthStore = create<AuthState>((set) => {
     } else {
       // 로그아웃 시 localStorage 데이터 삭제 (재로그인 시 Firestore에서 새로 받아옴)
       // → 샘플 데이터나 이전 유저 데이터가 남지 않도록
+      unsubscribeRealtime()
+
       try {
         const profiles = getStoredProfiles()
         for (const profile of profiles) {
@@ -130,6 +137,8 @@ export const useAuthStore = create<AuthState>((set) => {
           localStorage.removeItem(getProfileStorageKey(profile.id, 'assets'))
         }
         localStorage.removeItem(CATEGORY_STORAGE_KEY)
+        localStorage.removeItem(PROFILE_STORAGE_KEY)
+        localStorage.removeItem(CURRENT_PROFILE_KEY)
       } catch { /* ignore */ }
 
       // 모든 스토어 화면 초기화 이벤트 발송

@@ -22,6 +22,7 @@ import {
   getDocs,
   getDoc,
   writeBatch,
+  onSnapshot,
 } from 'firebase/firestore'
 import { db, isFirebaseConfigured } from './config'
 import { getProfileStorageKey } from '@/utils/constants'
@@ -200,6 +201,50 @@ export async function deleteProfileDataFromFirestore(uid: string, profileId: str
   } catch (err) {
     console.warn('[Sync] deleteProfileDataFromFirestore error:', err)
   }
+}
+
+// ───── 실시간 리스너 (크로스 디바이스 동기화) ─────
+let _unsubRealtime: (() => void) | null = null
+
+export function subscribeRealtime(
+  uid: string,
+  profiles: Profile[],
+  onDataUpdated: () => void,
+): void {
+  unsubscribeRealtime()
+  if (!isFirebaseConfigured || !db) return
+
+  const unsubs: (() => void)[] = []
+  for (const profile of profiles) {
+    for (const type of ['transactions', 'budgets', 'assets'] as SyncType[]) {
+      try {
+        const colRef = profileDataCol(uid, profile.id, type)
+        const unsub = onSnapshot(
+          colRef,
+          (snap) => {
+            // 이 기기에서 아직 서버에 반영 안 된 쓰기가 있으면 스킵
+            // → 모든 로컬 쓰기가 확정된 시점의 완전한 스냅샷만 처리
+            if (snap.metadata.hasPendingWrites) return
+            const items = snap.docs.map((d) => d.data())
+            localStorage.setItem(getProfileStorageKey(profile.id, type), JSON.stringify(items))
+            onDataUpdated()
+          },
+          (err) => {
+            console.warn(`[Sync] realtime ${type} error:`, err)
+          },
+        )
+        unsubs.push(unsub)
+      } catch (err) {
+        console.warn('[Sync] subscribeRealtime error:', err)
+      }
+    }
+  }
+  _unsubRealtime = () => unsubs.forEach((u) => u())
+}
+
+export function unsubscribeRealtime(): void {
+  _unsubRealtime?.()
+  _unsubRealtime = null
 }
 
 // ───── 로컬 → Firestore 전체 업로드 ─────

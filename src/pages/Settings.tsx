@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useCategoryStore } from '@/store/categoryStore'
 import { Modal } from '@/components/ui/Modal'
 import { CategoryMainEditor } from '@/components/categories/CategoryMainEditor'
 import { SubCategoryChips } from '@/components/categories/SubCategoryChips'
 import { getActiveProfileId, getProfileStorageKey, PROFILE_STORAGE_KEY } from '@/utils/constants'
+import { AppVersion } from '@/components/layout/AppVersion'
 import clsx from 'clsx'
 
 // ─── 데이터 내보내기 ─────────────────────────────────────────
@@ -41,9 +42,49 @@ function exportData() {
   }
 }
 
+// ─── 데이터 가져오기(복원) ───────────────────────────────────
+function importData(file: File, onDone: () => void) {
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target?.result as string)
+      if (!data || typeof data !== 'object') throw new Error('invalid backup file')
+
+      const profileId = typeof data.activeProfileId === 'string' ? data.activeProfileId : getActiveProfileId()
+
+      if (!confirm('현재 통장의 거래내역·예산·자산 데이터를 백업 파일 내용으로 덮어씁니다.\n계속할까요?')) {
+        onDone()
+        return
+      }
+
+      if (Array.isArray(data.profiles) && data.profiles.length > 0) {
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(data.profiles))
+      }
+      if (Array.isArray(data.transactions)) {
+        localStorage.setItem(getProfileStorageKey(profileId, 'transactions'), JSON.stringify(data.transactions))
+      }
+      if (Array.isArray(data.budgets)) {
+        localStorage.setItem(getProfileStorageKey(profileId, 'budgets'), JSON.stringify(data.budgets))
+      }
+      if (Array.isArray(data.assets)) {
+        localStorage.setItem(getProfileStorageKey(profileId, 'assets'), JSON.stringify(data.assets))
+      }
+
+      alert('데이터를 복원했습니다.')
+      window.location.reload()
+    } catch (err) {
+      alert('복원 중 오류가 발생했습니다. 올바른 백업 파일인지 확인해주세요.')
+      console.error(err)
+      onDone()
+    }
+  }
+  reader.readAsText(file)
+}
+
 export function Settings() {
   const [activeType, setActiveType] = useState<'expense' | 'income'>('expense')
   const [expandedCat, setExpandedCat] = useState<string | null>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
 
   // 대분류 추가/수정 모달
   const [modalOpen, setModalOpen] = useState(false)
@@ -99,7 +140,7 @@ export function Settings() {
       {/* 대분류 추가 버튼 */}
       <button
         onClick={openAddMain}
-        className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-2xl text-blue-600 dark:text-blue-400 hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors font-medium"
+        className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-primary-300 dark:border-primary-700 rounded-2xl text-primary-500 dark:text-primary-400 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors font-medium"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -124,7 +165,7 @@ export function Settings() {
           return (
             <div
               key={cat}
-              className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden"
             >
               {/* 대분류 헤더 */}
               <div className="flex items-center gap-3 px-4 py-3">
@@ -165,7 +206,7 @@ export function Settings() {
                   {/* 수정 */}
                   <button
                     onClick={() => openEditMain(cat)}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
                     title="수정"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,7 +236,7 @@ export function Settings() {
             resetToDefault()
             setExpandedCat(null)
           }}
-          className="w-full py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          className="w-full py-3 rounded-3xl border border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
         >
           기본값으로 초기화
         </button>
@@ -204,14 +245,14 @@ export function Settings() {
       {/* 데이터 관리 */}
       <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">데이터 관리</h2>
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
           {/* 데이터 내보내기 */}
           <button
             onClick={exportData}
             className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
           >
-            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
@@ -226,11 +267,46 @@ export function Settings() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
+
+          {/* 데이터 가져오기(복원) */}
+          <button
+            onClick={() => importInputRef.current?.click()}
+            className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors text-left"
+          >
+            <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">데이터 가져오기 (복원)</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                백업한 JSON 파일로 거래내역·예산·자산을 복원
+              </p>
+            </div>
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) importData(file, () => { e.target.value = '' })
+              else e.target.value = ''
+            }}
+          />
         </div>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 px-1">
           💡 정기적으로 백업해두면 데이터 분실을 예방할 수 있어요
         </p>
       </div>
+
+      <AppVersion className="lg:hidden pb-2" />
 
       {/* 대분류 추가/수정 모달 */}
       <Modal

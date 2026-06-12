@@ -180,7 +180,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
             className={clsx(
               'w-full pl-8 pr-4 py-3 rounded-xl border text-right text-lg font-semibold',
               'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-              'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
+              'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
               errors.amount ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
             )}
           />
@@ -200,7 +200,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           className={clsx(
             'w-full px-4 py-3 rounded-xl border',
             'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow',
+            'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
             errors.date ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
           )}
         />
@@ -216,7 +216,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           onChange={(e) => setMemo(e.target.value)}
           placeholder="간단한 메모를 입력하세요"
           maxLength={100}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow"
         />
       </div>
 
@@ -234,7 +234,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
                   className={clsx(
                     'w-full flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
                     mainCategory === cat
-                      ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                      ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
                       : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
                   )}
                 >
@@ -245,7 +245,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
                   type="button"
                   onClick={() => { setEditingMainCat(cat); setMainEditorOpen(true) }}
                   title="수정"
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-blue-500 shadow-sm transition-colors"
+                  className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-primary-500 shadow-sm transition-colors"
                 >
                   <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -260,7 +260,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           <button
             type="button"
             onClick={() => { setEditingMainCat(null); setMainEditorOpen(true) }}
-            className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-xs font-medium border-2 border-dashed border-blue-300 dark:border-blue-700 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-xs font-medium border-2 border-dashed border-primary-300 dark:border-primary-700 text-primary-500 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
           >
             <span className="text-xl">+</span>
             <span>대분류 추가</span>
@@ -269,7 +269,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
 
         {/* 대분류 추가/수정 인라인 패널 */}
         {mainEditorOpen && (
-          <div className="mt-3 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
+          <div className="mt-3 p-4 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10">
             <CategoryMainEditor
               key={editingMainCat ?? '__new__'}
               type={type}
@@ -334,8 +334,8 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
                 className={clsx(
                   'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium border transition-all',
                   paymentMethod === m.value
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-blue-400'
+                    ? 'bg-primary-500 text-white border-primary-500'
+                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-primary-400'
                 )}
               >
                 <span>{m.icon}</span>
@@ -414,7 +414,7 @@ function AccountSelector({ accounts, value, onChange, hint, hintColor = 'blue' }
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
       >
         <option value="">연동 안함</option>
         {accounts.map((a) => (

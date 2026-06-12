@@ -129,6 +129,9 @@ export const PROFILE_STORAGE_KEY = 'budget_app_profiles'
 export const CURRENT_PROFILE_KEY = 'budget_app_current_profile'
 export const DEFAULT_PROFILE_ID = 'default'
 
+// ───── 온보딩 ─────
+export const ONBOARDING_DONE_KEY = 'budget_app_onboarding_done'
+
 /** 프로필별 독립 스토리지 키 반환 */
 export function getProfileStorageKey(
   profileId: string,

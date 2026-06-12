@@ -83,7 +83,7 @@ export function CategoryMainEditor({ type, editingMain, onSaved, onCancel, onDel
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder="예: 반려동물"
           maxLength={10}
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
         />
       </div>
 
@@ -98,7 +98,7 @@ export function CategoryMainEditor({ type, editingMain, onSaved, onCancel, onDel
             value={iconSearch}
             onChange={(e) => setIconSearch(e.target.value)}
             placeholder="검색..."
-            className="w-20 text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-20 text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-400"
           />
         </div>
         <div className="grid grid-cols-10 gap-1 max-h-36 overflow-y-auto p-1 rounded-xl bg-gray-50 dark:bg-gray-700/50">
@@ -110,7 +110,7 @@ export function CategoryMainEditor({ type, editingMain, onSaved, onCancel, onDel
               className={clsx(
                 'w-8 h-8 flex items-center justify-center rounded-lg text-lg transition-all',
                 form.icon === icon
-                  ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40'
+                  ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/40'
                   : 'hover:bg-white dark:hover:bg-gray-600'
               )}
             >

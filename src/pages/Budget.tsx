@@ -59,7 +59,7 @@ export function Budget() {
       />
 
       {/* 월 선택 */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-3xl p-4 border border-gray-100 dark:border-gray-700">
         <button
           onClick={() => changeMonth(-1)}
           className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
@@ -84,8 +84,10 @@ export function Budget() {
 
       {totalBudget === 0 ? (
         /* 예산 미설정 상태 */
-        <div className="bg-white dark:bg-gray-800 rounded-2xl p-12 border border-gray-100 dark:border-gray-700 text-center">
-          <div className="text-5xl mb-4">🎯</div>
+        <div className="bg-violet-50 dark:bg-violet-900/20 rounded-[28px] p-12 text-center">
+          <div className="w-16 h-16 mx-auto rounded-full bg-violet-200 dark:bg-violet-800/40 flex items-center justify-center text-3xl mb-4">
+            🎯
+          </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">예산을 설정해보세요</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
             월 예산을 설정하면 지출을 효율적으로 관리할 수 있어요

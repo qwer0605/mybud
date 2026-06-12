@@ -43,7 +43,7 @@ export function Transactions() {
       />
 
       {/* 월 선택 (위젯 밖 — 항상 표시) */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-3xl p-4 border border-gray-100 dark:border-gray-700">
         <button onClick={() => changeMonth(-1)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -74,7 +74,7 @@ export function Transactions() {
         widgetMap={{
           recurring: <RecurringSection yearMonth={selectedYearMonth} />,
           filter: (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 border border-gray-100 dark:border-gray-700">
               <TransactionFilterBar />
             </div>
           ),

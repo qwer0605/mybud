@@ -59,7 +59,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden">
       {/* 헤더 */}
       <button
         type="button"
@@ -68,7 +68,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
       >
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
@@ -114,7 +114,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setIsAddOpen(true) }}
-                className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm text-primary-500 dark:text-primary-400 font-medium hover:underline"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -168,7 +168,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
                 <button
                   type="button"
                   onClick={handleRegisterAll}
-                  className="w-full mt-2 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors"
+                  className="w-full mt-2 py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
                 >
                   이번 달 미등록 {unregisteredCount}개 거래에 추가
                 </button>
@@ -181,7 +181,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
             <button
               type="button"
               onClick={() => setIsAddOpen(true)}
-              className="w-full py-2 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400 hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="w-full py-2 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400 hover:border-primary-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
             >
               + 고정비 추가
             </button>
@@ -237,7 +237,7 @@ function RecurringItem({ item, isRegistered, onEdit, onToggle }: RecurringItemPr
         onClick={onToggle}
         className={clsx(
           'w-4 h-4 rounded-full flex-shrink-0 transition-colors',
-          item.isActive ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
+          item.isActive ? 'bg-primary-400' : 'bg-gray-300 dark:bg-gray-600'
         )}
         title={item.isActive ? '비활성화' : '활성화'}
       />

@@ -20,7 +20,7 @@ export function ProgressBar({
     (clamped >= 100 ? 'danger' : clamped >= 80 ? 'warning' : 'default')
 
   const barColor = {
-    default: 'bg-blue-500',
+    default: 'bg-primary-400',
     warning: 'bg-amber-500',
     danger: 'bg-red-500',
     success: 'bg-green-500',

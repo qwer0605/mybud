@@ -146,7 +146,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
   }
 
   return {
-    transactions: loadFromStorage(),
+    transactions: loadFromStorage(undefined, !isFirebaseConfigured),
     filter: defaultFilter,
     isLoading: false,
 
@@ -164,7 +164,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         createdAt: now,
         updatedAt: now,
         paymentMethod: data.paymentMethod ?? 'cash',
-        cardAccountId: data.paymentMethod !== 'cash' ? (data.cardAccountId || undefined) : undefined,
+        cardAccountId: (data.type === 'income' || data.paymentMethod !== 'cash') ? (data.cardAccountId || undefined) : undefined,
         toAccountId: data.paymentMethod === 'transfer' ? (data.toAccountId || undefined) : undefined,
         recurringId: data.recurringId,
       }
@@ -192,7 +192,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => {
         date: data.date,
         updatedAt: now,
         paymentMethod: data.paymentMethod ?? 'cash',
-        cardAccountId: data.paymentMethod !== 'cash' ? (data.cardAccountId || undefined) : undefined,
+        cardAccountId: (data.type === 'income' || data.paymentMethod !== 'cash') ? (data.cardAccountId || undefined) : undefined,
         toAccountId: data.paymentMethod === 'transfer' ? (data.toAccountId || undefined) : undefined,
       }
       const transactions = get().transactions.map((t) => t.id === id ? updated : t)

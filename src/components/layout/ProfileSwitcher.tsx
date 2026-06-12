@@ -48,7 +48,7 @@ function ProfileForm({ initial, onSubmit, onCancel, onReset }: ProfileFormProps)
               className={clsx(
                 'w-9 h-9 rounded-xl text-xl flex items-center justify-center transition-all',
                 icon === ic
-                  ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/40'
+                  ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/40'
                   : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
               )}
             >
@@ -86,7 +86,7 @@ function ProfileForm({ initial, onSubmit, onCancel, onReset }: ProfileFormProps)
           onChange={(e) => { setName(e.target.value); setError('') }}
           placeholder="예: 모임통장, 계모임, 여행 적금"
           maxLength={20}
-          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
           autoFocus
         />
         {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
@@ -112,7 +112,7 @@ function ProfileForm({ initial, onSubmit, onCancel, onReset }: ProfileFormProps)
         </button>
         <button
           type="submit"
-          className="flex-1 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          className="flex-1 py-2 rounded-xl text-sm font-medium bg-primary-500 text-white hover:bg-primary-600 transition-colors"
         >
           {initial?.id ? '수정' : '추가'}
         </button>
@@ -248,7 +248,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
                       className={clsx(
                         'flex-1 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors',
                         profile.id === activeProfileId
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                           : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
                       )}
                     >
@@ -260,7 +260,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
                       </div>
                       <span className="flex-1 font-medium text-left">{profile.name}</span>
                       {profile.id === activeProfileId && (
-                        <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="w-4 h-4 text-primary-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                       )}
@@ -270,7 +270,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
                     <div className="flex-shrink-0 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); setMode({ editId: profile.id }) }}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
                         title="수정"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,7 +297,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
               <div className="border-t border-gray-100 dark:border-gray-700 p-2">
                 <button
                   onClick={() => setMode('add')}
-                  className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                  className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

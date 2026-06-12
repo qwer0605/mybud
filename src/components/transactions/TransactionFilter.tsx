@@ -41,7 +41,7 @@ export function TransactionFilterBar() {
           value={filter.searchText}
           onChange={(e) => setFilter({ searchText: e.target.value })}
           placeholder="메모, 카테고리 검색..."
-          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
         />
       </div>
 
@@ -54,7 +54,7 @@ export function TransactionFilterBar() {
             className={clsx(
               'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
               filter.type === t
-                ? 'bg-blue-600 text-white'
+                ? 'bg-primary-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             )}
           >
@@ -71,7 +71,7 @@ export function TransactionFilterBar() {
             className={clsx(
               'flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
               filter.mainCategory === cat
-                ? 'bg-blue-600 text-white'
+                ? 'bg-primary-500 text-white'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
             )}
           >
@@ -86,14 +86,14 @@ export function TransactionFilterBar() {
           type="date"
           value={filter.startDate}
           onChange={(e) => setFilter({ startDate: e.target.value })}
-          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-primary-400"
         />
         <span className="text-gray-400 text-xs flex-shrink-0">~</span>
         <input
           type="date"
           value={filter.endDate}
           onChange={(e) => setFilter({ endDate: e.target.value })}
-          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs focus:outline-none focus:ring-2 focus:ring-primary-400"
         />
         {hasActiveFilter && (
           <button

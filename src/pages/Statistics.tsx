@@ -30,7 +30,7 @@ export function Statistics() {
       <Header title="통계" />
 
       {/* 월 선택 */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-3xl p-4 border border-gray-100 dark:border-gray-700">
         <button
           onClick={() => changeMonth(-1)}
           className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
@@ -64,8 +64,8 @@ export function Statistics() {
                 label="잔액"
                 value={formatCurrency(balance)}
                 icon="💰"
-                color={balance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}
-                bgColor="bg-blue-50 dark:bg-blue-900/20"
+                color={balance >= 0 ? 'text-primary-600 dark:text-primary-400' : 'text-red-600 dark:text-red-400'}
+                bgColor="bg-primary-50 dark:bg-primary-900/20"
               />
             </div>
           ),
@@ -97,7 +97,7 @@ export function Statistics() {
                     <div
                       key={stat.yearMonth}
                       className={clsx('flex items-center justify-between p-3 rounded-xl',
-                        isCurrent ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-700/30'
+                        isCurrent ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-gray-50 dark:bg-gray-700/30'
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export function Statistics() {
                           {formatYearMonth(stat.yearMonth)}
                         </span>
                         {isCurrent && (
-                          <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 font-medium">
+                          <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 font-medium">
                             이번달
                           </span>
                         )}
@@ -141,7 +141,7 @@ interface StatSummaryCardProps {
 
 function StatSummaryCard({ label, value, icon, color, bgColor }: StatSummaryCardProps) {
   return (
-    <div className={clsx('rounded-2xl p-3 sm:p-4', bgColor)}>
+    <div className={clsx('rounded-3xl p-3 sm:p-4', bgColor)}>
       <div className="text-xl sm:text-2xl mb-1">{icon}</div>
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
       <p className={clsx('text-xs sm:text-sm font-bold leading-tight', color)}>{value}</p>
