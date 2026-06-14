@@ -50,7 +50,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       <div
         className={clsx(
           'relative w-full flex flex-col',
-          'bg-white dark:bg-gray-800 shadow-2xl',
+          'bg-white dark:bg-gray-900 shadow-2xl',
           'rounded-t-2xl sm:rounded-2xl',
           'max-h-[92vh] sm:max-h-[88vh]',
           'animate-in slide-in-from-bottom-4 duration-200',
@@ -62,7 +62,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       >
         {/* 헤더 — 고정 */}
         {title && (
-          <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-cream-200 dark:border-gray-800">
             <h2
               id="modal-title"
               className="text-lg font-semibold text-gray-900 dark:text-white"
@@ -71,7 +71,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             </h2>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors"
               aria-label="닫기"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

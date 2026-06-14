@@ -49,7 +49,7 @@ export function WidgetContainer({ pageId, widgetMap }: WidgetContainerProps) {
         ) : (
           <button
             onClick={() => startEdit(pageId)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 dark:text-gray-500 text-xs font-medium rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 dark:text-gray-500 text-xs font-medium rounded-xl hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

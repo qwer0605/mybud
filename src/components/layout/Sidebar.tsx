@@ -100,9 +100,9 @@ export function Sidebar() {
       document.documentElement.classList.contains('dark'))
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 fixed left-0 top-0 bottom-0 z-30">
+    <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-white dark:bg-gray-900 border-r border-[#EAE6DC] dark:border-gray-800 fixed left-0 top-0 bottom-0 z-30">
       {/* 로고 */}
-      <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+      <div className="p-6 border-b border-[#EAE6DC] dark:border-gray-800">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm">
             ₩
@@ -115,7 +115,7 @@ export function Sidebar() {
       </div>
 
       {/* 프로필 스위처 */}
-      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+      <div className="px-4 py-3 border-b border-[#EAE6DC] dark:border-gray-800">
         <ProfileSwitcher compact />
       </div>
 
@@ -142,7 +142,7 @@ export function Sidebar() {
       </nav>
 
       {/* 하단 영역 */}
-      <div className="p-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
+      <div className="p-4 border-t border-[#EAE6DC] dark:border-gray-800 space-y-2">
         {/* Google 동기화 버튼 */}
         <AuthButton layout="sidebar" />
 

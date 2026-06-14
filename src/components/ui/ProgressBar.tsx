@@ -20,14 +20,14 @@ export function ProgressBar({
     (clamped >= 100 ? 'danger' : clamped >= 80 ? 'warning' : 'default')
 
   const barColor = {
-    default: 'bg-primary-400',
+    default: 'bg-primary-500',
     warning: 'bg-amber-500',
-    danger: 'bg-red-500',
+    danger: 'bg-[#F0524B]',
     success: 'bg-green-500',
   }[autoVariant]
 
   const trackColor = {
-    default: 'bg-gray-100 dark:bg-gray-700',
+    default: 'bg-[#EDE9DF] dark:bg-gray-700',
     warning: 'bg-amber-100 dark:bg-amber-900/30',
     danger: 'bg-red-100 dark:bg-red-900/30',
     success: 'bg-green-100 dark:bg-green-900/30',

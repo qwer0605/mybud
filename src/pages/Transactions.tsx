@@ -43,8 +43,8 @@ export function Transactions() {
       />
 
       {/* 월 선택 (위젯 밖 — 항상 표시) */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-3xl p-4 border border-gray-100 dark:border-gray-700">
-        <button onClick={() => changeMonth(-1)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-3xl p-4 border border-cream-200 dark:border-gray-800">
+        <button onClick={() => changeMonth(-1)} className="p-2 rounded-xl hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -53,7 +53,7 @@ export function Transactions() {
           <span className="text-base font-semibold text-gray-900 dark:text-white">
             {formatYearMonth(selectedYearMonth)}
           </span>
-          <div className="flex gap-4 mt-1 justify-center text-xs">
+          <div className="flex gap-4 mt-1 justify-center text-xs font-num">
             <span className="text-green-600 dark:text-green-400">+{formatCurrency(totalIncome)}</span>
             <span className="text-red-600 dark:text-red-400">-{formatCurrency(totalExpense)}</span>
           </div>
@@ -61,7 +61,7 @@ export function Transactions() {
         <button
           onClick={() => changeMonth(1)}
           disabled={isCurrentMonth}
-          className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30"
+          className="p-2 rounded-xl hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -74,7 +74,7 @@ export function Transactions() {
         widgetMap={{
           recurring: <RecurringSection yearMonth={selectedYearMonth} />,
           filter: (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-4 border border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 border border-cream-200 dark:border-gray-800">
               <TransactionFilterBar />
             </div>
           ),

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Transaction } from '@/types'
 import { getMainCategoryMeta } from '@/utils/constants'
 import { formatCurrency } from '@/utils/formatters'
+import { CategoryCoin } from '@/components/ui/CategoryCoin'
 import clsx from 'clsx'
 
 interface TransactionItemProps {
@@ -30,14 +31,7 @@ export function TransactionItem({ transaction, onEdit, onDelete }: TransactionIt
       onClick={() => setShowActions(!showActions)}
     >
       {/* 카테고리 아이콘 */}
-      <div
-        className={clsx(
-          'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center text-xl',
-          meta?.bgColor ?? 'bg-gray-100 dark:bg-gray-700'
-        )}
-      >
-        {meta?.icon ?? '📦'}
-      </div>
+      <CategoryCoin color={meta?.color ?? '#94908A'} emoji={meta?.icon ?? '📦'} size={44} />
 
       {/* 내용 */}
       <div className="flex-1 min-w-0">
@@ -72,7 +66,7 @@ export function TransactionItem({ transaction, onEdit, onDelete }: TransactionIt
       <div className="flex-shrink-0 text-right">
         <span
           className={clsx(
-            'text-sm font-semibold',
+            'font-num text-sm font-semibold',
             transaction.type === 'income'
               ? 'text-green-600 dark:text-green-400'
               : 'text-red-600 dark:text-red-400'

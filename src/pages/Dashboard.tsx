@@ -4,6 +4,7 @@ import { Modal } from '@/components/ui/Modal'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
 import { TransactionList } from '@/components/transactions/TransactionList'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { HeroCard } from '@/components/ui/HeroCard'
 import { WidgetContainer } from '@/components/widgets/WidgetContainer'
 import { useTransactionStore } from '@/store/transactionStore'
 import { useAssetStore } from '@/store/assetStore'
@@ -42,6 +43,17 @@ export function Dashboard() {
         </button>
       </div>
 
+      {/* 차곡 히어로 카드: 이번 달 남은 예산 */}
+      {totalBudget > 0 && (
+        <HeroCard
+          remaining={totalBudget - totalSpent}
+          spent={totalSpent}
+          totalBudget={totalBudget}
+          isOverBudget={isOverBudget}
+          formatCurrency={formatCurrency}
+        />
+      )}
+
       <WidgetContainer
         pageId="dashboard"
         widgetMap={{
@@ -56,7 +68,7 @@ export function Dashboard() {
                   <p className="text-sm font-semibold text-primary-500">총 보유자산</p>
                   <span className="text-xs font-medium text-primary-400">관리 →</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                <p className="font-num text-2xl font-bold text-gray-900 dark:text-white truncate">
                   {formatCurrency(availableAssets)}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
@@ -75,17 +87,17 @@ export function Dashboard() {
                 <div className="bg-sky-50 dark:bg-sky-900/20 rounded-[24px] p-3.5 text-center">
                   <div className="w-9 h-9 mx-auto rounded-full bg-sky-200 dark:bg-sky-800/40 flex items-center justify-center text-lg mb-1.5">💸</div>
                   <p className="text-xs text-sky-500 font-semibold mb-0.5">수입</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(totalIncome)}</p>
+                  <p className="font-num text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(totalIncome)}</p>
                 </div>
                 <div className="bg-rose-50 dark:bg-rose-900/20 rounded-[24px] p-3.5 text-center">
                   <div className="w-9 h-9 mx-auto rounded-full bg-rose-200 dark:bg-rose-800/40 flex items-center justify-center text-lg mb-1.5">🛍️</div>
                   <p className="text-xs text-rose-500 font-semibold mb-0.5">지출</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(totalExpense)}</p>
+                  <p className="font-num text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(totalExpense)}</p>
                 </div>
                 <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-[24px] p-3.5 text-center">
                   <div className="w-9 h-9 mx-auto rounded-full bg-emerald-200 dark:bg-emerald-800/40 flex items-center justify-center text-lg mb-1.5">🌱</div>
                   <p className="text-xs text-emerald-500 font-semibold mb-0.5">수지</p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  <p className="font-num text-sm font-bold text-gray-900 dark:text-white">
                     {balance < 0 ? '-' : balance > 0 ? '+' : ''}
                     {formatCurrency(Math.abs(balance))}
                   </p>
@@ -120,10 +132,10 @@ export function Dashboard() {
                     </p>
                   )}
                 </div>
-                <span className="text-lg font-bold text-gray-900 dark:text-white">{overallPercentage}%</span>
+                <span className="font-num text-lg font-bold text-gray-900 dark:text-white">{overallPercentage}%</span>
               </div>
               <ProgressBar percentage={overallPercentage} />
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+              <p className="font-num text-xs text-gray-400 dark:text-gray-500 mt-2">
                 {formatCurrency(totalSpent)} / {formatCurrency(totalBudget)}
               </p>
               {topCategories.length > 0 && (

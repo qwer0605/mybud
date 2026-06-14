@@ -31,7 +31,7 @@ function renderCustomLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent
   const y = cy + radius * Math.sin(-midAngle * RADIAN)
 
   return (
-    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600}>
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={600} fontFamily="'Space Grotesk', sans-serif">
       {`${(percent * 100).toFixed(0)}%`}
     </text>
   )
@@ -91,7 +91,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
                   {meta?.icon} {item.mainCategory}
                 </span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 font-num">
                 <span className="text-xs text-gray-500 dark:text-gray-400">{item.percentage}%</span>
                 <span className="text-xs font-medium text-gray-800 dark:text-gray-200 w-24 text-right">
                   {formatCurrency(item.amount)}

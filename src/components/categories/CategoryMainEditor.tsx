@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCategoryStore } from '@/store/categoryStore'
 import { Button } from '@/components/ui/Button'
+import { CategoryCoin } from '@/components/ui/CategoryCoin'
 import { ICON_OPTIONS, COLOR_OPTIONS } from '@/utils/categoryOptions'
 import clsx from 'clsx'
 
@@ -15,7 +16,7 @@ const DEFAULT_FORM: MainFormState = {
   name: '',
   icon: '📦',
   color: '#9ca3af',
-  bgColor: 'bg-gray-100 dark:bg-gray-700/50',
+  bgColor: 'bg-cream-100 dark:bg-gray-700/50',
 }
 
 interface CategoryMainEditorProps {
@@ -66,9 +67,7 @@ export function CategoryMainEditor({ type, editingMain, onSaved, onCancel, onDel
     <div className="space-y-5">
       {/* 미리보기 */}
       <div className="flex items-center justify-center">
-        <div className={clsx('w-16 h-16 rounded-2xl flex items-center justify-center text-3xl', form.bgColor)}>
-          {form.icon}
-        </div>
+        <CategoryCoin color={form.color} emoji={form.icon} size={64} radius={20} />
       </div>
 
       {/* 이름 */}
@@ -83,7 +82,7 @@ export function CategoryMainEditor({ type, editingMain, onSaved, onCancel, onDel
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
           placeholder="예: 반려동물"
           maxLength={10}
-          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+          className="w-full px-4 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
         />
       </div>
 
@@ -98,7 +97,7 @@ export function CategoryMainEditor({ type, editingMain, onSaved, onCancel, onDel
             value={iconSearch}
             onChange={(e) => setIconSearch(e.target.value)}
             placeholder="검색..."
-            className="w-20 text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-400"
+            className="w-20 text-xs px-2 py-1 rounded-lg border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-400"
           />
         </div>
         <div className="grid grid-cols-10 gap-1 max-h-36 overflow-y-auto p-1 rounded-xl bg-gray-50 dark:bg-gray-700/50">

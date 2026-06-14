@@ -26,7 +26,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-200">
+    <div className="min-h-screen bg-cream-100 dark:bg-ink transition-colors duration-200">
       {/* 오프라인 알림 배너 */}
       {!isOnline && (
         <div className="fixed top-0 left-0 right-0 z-50 bg-amber-400 text-amber-900 text-center text-xs py-1.5 font-medium">
@@ -36,7 +36,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <Sidebar />
 
       {/* 모바일 상단 프로필 바 */}
-      <div className="lg:hidden sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5">
+      <div className="lg:hidden sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-[#EAE6DC] dark:border-gray-800 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <div className="flex-1 min-w-0">
             <ProfileSwitcher />
@@ -49,7 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               `p-2 rounded-lg transition-colors ${
                 isActive
                   ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30'
-                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-gray-800'
               }`
             }
             title="설정"

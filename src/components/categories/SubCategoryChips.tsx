@@ -14,10 +14,12 @@ interface SubCategoryChipsProps {
   onSubRenamed?: (oldName: string, newName: string) => void
   /** 소분류가 삭제된 후 호출 (선택 상태 보정용) */
   onSubDeleted?: (name: string) => void
+  /** 선택된 칩에 사용할 대분류 색상 (없으면 기본 primary 색상) */
+  color?: string
 }
 
 export function SubCategoryChips({
-  type, mainCategory, subs, selectable = false, selectedSub, onSelect, onSubRenamed, onSubDeleted,
+  type, mainCategory, subs, selectable = false, selectedSub, onSelect, onSubRenamed, onSubDeleted, color,
 }: SubCategoryChipsProps) {
   const { addSubCategory, renameSubCategory, deleteSubCategory } = useCategoryStore()
 
@@ -94,9 +96,10 @@ export function SubCategoryChips({
             className={clsx(
               'flex items-center gap-1 rounded-full pl-3 pr-1.5 py-1.5 border text-xs font-medium transition-all duration-150',
               isSelected
-                ? 'bg-primary-500 text-white border-primary-500'
-                : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600'
+                ? 'text-white border-transparent'
+                : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-cream-200 dark:border-gray-600'
             )}
+            style={isSelected ? { backgroundColor: color ?? '#10C57C' } : undefined}
           >
             <button
               type="button"
@@ -112,7 +115,7 @@ export function SubCategoryChips({
               className={clsx(
                 'w-4 h-4 flex items-center justify-center rounded-full transition-colors',
                 isSelected
-                  ? 'text-primary-100 hover:text-white hover:bg-primary-400'
+                  ? 'text-white/70 hover:text-white hover:bg-black/15'
                   : 'text-gray-300 hover:text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/40'
               )}
             >
@@ -128,7 +131,7 @@ export function SubCategoryChips({
               className={clsx(
                 'w-4 h-4 flex items-center justify-center rounded-full transition-colors',
                 isSelected
-                  ? 'text-primary-100 hover:text-white hover:bg-primary-400'
+                  ? 'text-white/70 hover:text-white hover:bg-black/15'
                   : 'text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40'
               )}
             >

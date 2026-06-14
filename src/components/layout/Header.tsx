@@ -23,7 +23,7 @@ export function Header({ title, subtitle, action }: HeaderProps) {
         {/* 모바일에서 테마 토글 버튼 */}
         <button
           onClick={toggleTheme}
-          className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+          className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-cream-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
           aria-label="테마 전환"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

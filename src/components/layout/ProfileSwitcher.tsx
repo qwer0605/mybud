@@ -49,7 +49,7 @@ function ProfileForm({ initial, onSubmit, onCancel, onReset }: ProfileFormProps)
                 'w-9 h-9 rounded-xl text-xl flex items-center justify-center transition-all',
                 icon === ic
                   ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/40'
-                  : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  : 'bg-cream-100 dark:bg-gray-700 hover:bg-cream-200 dark:hover:bg-gray-600'
               )}
             >
               {ic}
@@ -86,7 +86,7 @@ function ProfileForm({ initial, onSubmit, onCancel, onReset }: ProfileFormProps)
           onChange={(e) => { setName(e.target.value); setError('') }}
           placeholder="예: 모임통장, 계모임, 여행 적금"
           maxLength={20}
-          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+          className="w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
           autoFocus
         />
         {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
@@ -106,7 +106,7 @@ function ProfileForm({ initial, onSubmit, onCancel, onReset }: ProfileFormProps)
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          className="flex-1 py-2 rounded-xl text-sm font-medium bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600 transition-colors"
         >
           취소
         </button>
@@ -120,7 +120,7 @@ function ProfileForm({ initial, onSubmit, onCancel, onReset }: ProfileFormProps)
 
       {/* 초기화 버튼 (수정 모드에서만) */}
       {initial?.id && onReset && (
-        <div className="pt-1 border-t border-gray-100 dark:border-gray-700">
+        <div className="pt-1 border-t border-cream-200 dark:border-gray-700">
           <button
             type="button"
             onClick={onReset}
@@ -211,7 +211,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
           'flex items-center gap-2.5 w-full transition-colors rounded-xl',
           compact
             ? 'px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800'
-            : 'px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
+            : 'px-3 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-cream-100 dark:hover:bg-gray-700'
         )}
       >
         {/* 아이콘 */}
@@ -236,7 +236,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
 
       {/* 드롭다운 */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-cream-200 dark:border-gray-700 z-50 overflow-hidden">
 
           {mode === 'list' && (
             <>
@@ -294,7 +294,7 @@ export function ProfileSwitcher({ compact = false }: ProfileSwitcherProps) {
               </div>
 
               {/* 새 통장 추가 */}
-              <div className="border-t border-gray-100 dark:border-gray-700 p-2">
+              <div className="border-t border-cream-200 dark:border-gray-700 p-2">
                 <button
                   onClick={() => setMode('add')}
                   className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"

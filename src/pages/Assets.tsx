@@ -118,7 +118,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
   return (
     <form onSubmit={handleSubmit} className="p-5 space-y-4">
       {/* 자산 / 부채 탭 */}
-      <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600">
+      <div className="flex rounded-xl overflow-hidden border border-cream-200 dark:border-gray-600">
         <button
           type="button"
           onClick={() => handleTabChange(false)}
@@ -160,7 +160,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
                   ? form.isLiability
                     ? 'bg-red-50 dark:bg-red-900/30 border-red-400 dark:border-red-500 text-red-700 dark:text-red-300'
                     : 'bg-primary-50 dark:bg-primary-900/30 border-primary-400 dark:border-primary-500 text-primary-700 dark:text-primary-300'
-                  : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  : 'bg-white dark:bg-gray-700 border-cream-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
               )}
             >
               {t}
@@ -178,7 +178,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
           onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); setError('') }}
           placeholder={form.isLiability ? '예: 주택담보대출, 신용카드' : '예: 국민은행 통장, 삼성전자 주식'}
           maxLength={30}
-          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+          className="w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
           autoFocus
         />
       </div>
@@ -201,7 +201,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
                 setError('')
               }}
               placeholder="0"
-              className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+              className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
             />
           </div>
           <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
@@ -225,7 +225,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
             value={form.amountStr}
             onChange={(e) => { setForm((f) => ({ ...f, amountStr: formatAmountInput(e.target.value) })); setError('') }}
             placeholder="0"
-            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
           />
         </div>
         {initial && (
@@ -244,7 +244,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
           onChange={(e) => setForm((f) => ({ ...f, memo: e.target.value }))}
           placeholder="메모를 입력하세요"
           maxLength={100}
-          className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+          className="w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
         />
       </div>
 
@@ -254,7 +254,7 @@ function AccountModal({ initial, onClose }: AccountModalProps) {
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600 transition-colors"
         >
           취소
         </button>
@@ -323,7 +323,7 @@ function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
         <span className="text-xl">💳</span>
         <div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">{card.name}</p>
-          <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+          <p className="font-num text-xs text-red-600 dark:text-red-400 mt-0.5">
             미결제 잔액 {formatCurrency(card.amount)}
           </p>
         </div>
@@ -340,7 +340,7 @@ function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
           <select
             value={fromId}
             onChange={(e) => { setFromId(e.target.value); setError('') }}
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+            className="w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
           >
             {assetAccounts.map((a) => (
               <option key={a.id} value={a.id}>
@@ -359,7 +359,7 @@ function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
             <button
               type="button"
               onClick={() => { setAmountStr(card.amount.toLocaleString('ko-KR')); setError('') }}
-              className="text-xs text-primary-500 dark:text-primary-400 hover:underline"
+              className="font-num text-xs text-primary-500 dark:text-primary-400 hover:underline"
             >
               전액 ({formatCurrency(card.amount)})
             </button>
@@ -378,12 +378,12 @@ function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
             }}
             placeholder="0"
             autoFocus
-            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
           />
         </div>
         {/* 납부 후 잔액 미리보기 */}
         {amount > 0 && fromAccount && (
-          <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 font-num">
             납부 후 →&nbsp;
             <span className="font-medium text-gray-600 dark:text-gray-300">{card.name}</span>
             &nbsp;{formatCurrency(Math.max(0, card.amount - amount))}&nbsp;/&nbsp;
@@ -399,7 +399,7 @@ function CardPaymentModal({ card, accounts, onClose }: CardPaymentModalProps) {
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600 transition-colors"
         >
           취소
         </button>
@@ -443,7 +443,7 @@ function AccountRow({ account, onEdit, onDelete, onPay }: AccountRowProps) {
           <p className="text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5">{account.memo}</p>
         )}
         {showInitial && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="font-num text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             기초 {account.isLiability ? '-' : ''}
             {formatCurrency(account.initialAmount!)}
           </p>
@@ -451,7 +451,7 @@ function AccountRow({ account, onEdit, onDelete, onPay }: AccountRowProps) {
       </div>
       <div className="text-right flex-shrink-0">
         <span className={clsx(
-          'text-sm font-semibold',
+          'font-num text-sm font-semibold',
           account.isLiability ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'
         )}>
           {account.isLiability ? '-' : ''}{formatCurrency(account.amount)}
@@ -519,9 +519,9 @@ function TypeSection({ title, icon, bgColor, accounts, onEdit, onDelete, onPay }
           </span>
           <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</span>
         </div>
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{formatCurrency(total)}</span>
+        <span className="font-num text-sm font-medium text-gray-500 dark:text-gray-400">{formatCurrency(total)}</span>
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-gray-700/50">
+      <div className="divide-y divide-cream-200 dark:divide-gray-700/50">
         {accounts.map((a) => (
           <AccountRow
             key={a.id}
@@ -627,22 +627,23 @@ export function Assets() {
         widgetMap={{
           /* 순자산 추이 차트 */
           'trend-chart': chartData.length > 1 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm border border-cream-200 dark:border-gray-800">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">순자산 추이</h3>
               <ResponsiveContainer width="100%" height={160}>
                 <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) =>
+                  <YAxis tick={{ fontSize: 11, fontFamily: "'Space Grotesk', sans-serif" }} tickFormatter={(v: number) =>
                     v >= 100000000 ? `${(v / 100000000).toFixed(1)}억`
                     : v >= 10000   ? `${(v / 10000).toFixed(0)}만`
                     : String(v)
                   } />
                   <Tooltip formatter={(v: number) => [formatCurrency(v), '순자산']}
                     contentStyle={{ backgroundColor: 'var(--tooltip-bg, #fff)', borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: '12px' }}
+                    itemStyle={{ fontFamily: "'Space Grotesk', sans-serif" }}
                   />
-                  <Line type="monotone" dataKey="순자산" stroke="#f97316" strokeWidth={2.5}
-                    dot={{ r: 4, fill: '#f97316' }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="순자산" stroke="#10C57C" strokeWidth={2.5}
+                    dot={{ r: 4, fill: '#10C57C' }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -650,7 +651,7 @@ export function Assets() {
 
           /* 자산 목록 */
           'assets-list': (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm border border-cream-200 dark:border-gray-800">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">자산</h3>
                 <button onClick={() => openAdd(false)} className="flex items-center gap-1.5 text-xs font-medium text-primary-500 dark:text-primary-400 hover:text-primary-600 transition-colors">
@@ -669,7 +670,7 @@ export function Assets() {
                     return (
                       <button key={type} onClick={() => toggleDashboardAssetType(type)}
                         className={clsx('flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
-                          isActive ? 'bg-primary-500 text-white border-primary-500 shadow-sm' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-200 dark:border-gray-600'
+                          isActive ? 'bg-primary-500 text-white border-primary-500 shadow-sm' : 'bg-white dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-cream-200 dark:border-gray-600'
                         )}
                       >
                         <span>{meta.icon}</span><span>{type}</span>
@@ -695,7 +696,7 @@ export function Assets() {
 
           /* 부채 목록 */
           'liabilities-list': (
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm border border-cream-200 dark:border-gray-800">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">부채</h3>
                 <button onClick={() => openAdd(true)} className="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 transition-colors">
@@ -800,7 +801,7 @@ function TransferModal({ accounts, onTransfer, onClose }: TransferModalProps) {
   }
 
   const selectClass =
-    'w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400'
+    'w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-400'
 
   return (
     <form onSubmit={handleSubmit} className="p-5 space-y-4">
@@ -819,7 +820,7 @@ function TransferModal({ accounts, onTransfer, onClose }: TransferModalProps) {
           ))}
         </select>
         {fromAccount && (
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 font-num">
             현재 잔액 {fromAccount.isLiability ? '-' : ''}{formatCurrency(fromAccount.amount)}
           </p>
         )}
@@ -850,7 +851,7 @@ function TransferModal({ accounts, onTransfer, onClose }: TransferModalProps) {
           ))}
         </select>
         {toAccount && (
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500 font-num">
             현재 잔액 {toAccount.isLiability ? '-' : ''}{formatCurrency(toAccount.amount)}
           </p>
         )}
@@ -868,7 +869,7 @@ function TransferModal({ accounts, onTransfer, onClose }: TransferModalProps) {
             onChange={(e) => { setAmountStr(formatAmountInput(e.target.value)); setError('') }}
             placeholder="0"
             autoFocus
-            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
+            className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400"
           />
         </div>
         {/* 이체 후 잔액 미리보기 */}
@@ -876,7 +877,7 @@ function TransferModal({ accounts, onTransfer, onClose }: TransferModalProps) {
           const amt = parseInt(amountStr.replace(/[^0-9]/g, '')) || 0
           if (amt <= 0) return null
           return (
-            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500 font-num">
               이체 후 →&nbsp;
               <span className="font-medium text-gray-600 dark:text-gray-300">{fromAccount.name}</span>
               &nbsp;{formatCurrency(fromAccount.amount - amt)}&nbsp;/&nbsp;
@@ -893,7 +894,7 @@ function TransferModal({ accounts, onTransfer, onClose }: TransferModalProps) {
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-cream-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-cream-200 dark:hover:bg-gray-600 transition-colors"
         >
           취소
         </button>
@@ -919,12 +920,12 @@ interface SummaryCardProps {
 
 function SummaryCard({ label, amount, colorClass, bgClass, icon }: SummaryCardProps) {
   return (
-    <div className={clsx('rounded-3xl p-4 shadow-sm border border-gray-100 dark:border-gray-700', bgClass)}>
+    <div className={clsx('rounded-3xl p-4 shadow-sm border border-cream-200 dark:border-gray-700', bgClass)}>
       <div className="flex items-center gap-1.5 mb-2">
         <span className="text-base">{icon}</span>
         <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
       </div>
-      <p className={clsx('text-base font-bold leading-tight', colorClass)}>
+      <p className={clsx('font-num text-base font-bold leading-tight', colorClass)}>
         {formatCurrency(Math.abs(amount))}
       </p>
     </div>

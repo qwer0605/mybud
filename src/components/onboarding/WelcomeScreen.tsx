@@ -2,17 +2,12 @@ import { useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { isFirebaseConfigured } from '@/firebase/config'
 import { ONBOARDING_DONE_KEY } from '@/utils/constants'
+import { LogoMark } from '@/components/ui/LogoMark'
+import { CategoryCoin } from '@/components/ui/CategoryCoin'
 
 interface WelcomeScreenProps {
   onDone: () => void
 }
-
-const FEATURES: { icon: string; title: string; desc: string }[] = [
-  { icon: '💰', title: '수입 · 지출 기록', desc: '카테고리별로 거래 내역을 빠르게 관리해요' },
-  { icon: '📊', title: '예산 관리', desc: '카테고리별 예산을 설정하고 사용 현황을 확인해요' },
-  { icon: '🏦', title: '자산 · 순자산 추적', desc: '계좌 잔액과 순자산 변화를 한눈에 봐요' },
-  { icon: '🔁', title: '고정비 · 고정수입', desc: '매월 반복되는 거래를 자동으로 등록해요' },
-]
 
 export function WelcomeScreen({ onDone }: WelcomeScreenProps) {
   const { signInWithGoogle } = useAuthStore()
@@ -34,68 +29,63 @@ export function WelcomeScreen({ onDone }: WelcomeScreenProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4 py-10">
-      <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 p-8">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-ink px-6 py-10">
+      <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full">
         {/* 로고 */}
-        <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-sm mb-4">
-            ₩
-          </div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">가계부</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">스마트 예산 관리</p>
-        </div>
+        <LogoMark size={32} className="mb-10" />
 
-        {/* 기능 소개 */}
-        <div className="space-y-4 mb-8">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-900/30 flex items-center justify-center text-lg flex-shrink-0">
-                {f.icon}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">{f.title}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{f.desc}</p>
-              </div>
+        {/* 히어로: 미니 대시보드 카드 */}
+        <div className="relative w-full mb-12">
+          <div className="relative overflow-hidden rounded-[26px] p-5 bg-[#1C1A16] text-white shadow-card">
+            <div className="absolute -top-10 -right-8 w-36 h-36 rounded-full bg-primary-500 opacity-20 blur-md pointer-events-none" />
+            <p className="text-[13px] text-white/65 font-medium relative">이번 달 남은 예산</p>
+            <p className="font-num text-3xl font-bold mt-1.5 mb-3 relative tracking-tight">₩842,000</p>
+            <div className="h-2 rounded-full bg-white/16 overflow-hidden relative">
+              <div className="h-full w-[58%] rounded-full bg-primary-500" />
             </div>
-          ))}
+          </div>
+
+          {/* 플로팅 뱃지 */}
+          <div className="absolute -bottom-5 -right-3 flex items-center gap-2.5 bg-white dark:bg-gray-900 rounded-2xl shadow-card px-4 py-2.5 border border-[#EAE6DC] dark:border-gray-800">
+            <CategoryCoin color="#10C57C" emoji="💰" size={32} />
+            <div>
+              <p className="text-[10px] text-ink-muted font-medium">오늘 기록</p>
+              <p className="font-num text-sm font-bold text-ink dark:text-white leading-tight">+₩30,000</p>
+            </div>
+          </div>
         </div>
 
-        {/* 시작 버튼 */}
-        {isFirebaseConfigured ? (
-          <div className="space-y-2.5">
-            <button
-              onClick={handleGoogleSignIn}
-              disabled={isSigningIn}
-              className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl font-medium text-sm bg-primary-500 hover:bg-primary-600 text-white transition-colors disabled:opacity-60"
-            >
-              {isSigningIn ? (
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#fff" />
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#fff" fillOpacity="0.85" />
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#fff" fillOpacity="0.7" />
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#fff" fillOpacity="0.55" />
-                </svg>
-              )}
-              Google로 로그인하고 시작
-            </button>
-            <button
-              onClick={finish}
-              className="w-full py-3 rounded-xl font-medium text-sm bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              로그인 없이 시작 (이 기기에 저장)
-            </button>
-            <p className="text-xs text-gray-400 dark:text-gray-500 text-center pt-1">
-              로그인하면 여러 기기에서 데이터가 동기화돼요
-            </p>
-          </div>
-        ) : (
+        {/* 헤드라인 */}
+        <h1 className="text-[28px] font-bold text-ink dark:text-white text-center leading-tight">
+          3초 만에 기록하는<br />가장 쉬운 가계부
+        </h1>
+        <p className="text-sm text-ink-2 dark:text-gray-400 text-center mt-2">
+          카테고리 · 예산 · 자산까지, 차곡차곡 쌓이는 가계부
+        </p>
+      </div>
+
+      {/* CTA */}
+      <div className="max-w-md mx-auto w-full space-y-3 pt-6">
+        <button
+          onClick={finish}
+          className="w-full py-3.5 rounded-2xl font-semibold text-sm bg-ink dark:bg-white text-white dark:text-ink transition-colors"
+        >
+          시작하기
+        </button>
+        {isFirebaseConfigured && (
           <button
-            onClick={finish}
-            className="w-full py-3 rounded-xl font-medium text-sm bg-primary-500 hover:bg-primary-600 text-white transition-colors"
+            onClick={handleGoogleSignIn}
+            disabled={isSigningIn}
+            className="w-full py-2 text-sm font-medium text-ink-2 dark:text-gray-400 hover:text-ink dark:hover:text-white transition-colors disabled:opacity-60"
           >
-            시작하기
+            {isSigningIn ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="w-3.5 h-3.5 border-2 border-ink-muted/40 border-t-ink-muted rounded-full animate-spin" />
+                로그인 중...
+              </span>
+            ) : (
+              '이미 계정이 있나요? Google로 로그인'
+            )}
           </button>
         )}
       </div>

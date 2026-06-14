@@ -113,7 +113,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* 수입/지출 */}
-      <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-700 rounded-xl">
+      <div className="flex gap-2 p-1 bg-cream-100 dark:bg-gray-700 rounded-xl">
         {(['expense', 'income'] as const).map((t) => (
           <button
             key={t}
@@ -148,7 +148,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
             'w-full px-4 py-3 rounded-xl border',
             'bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400',
             'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
-            errors.name ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
+            errors.name ? 'border-red-300 dark:border-red-600' : 'border-cream-200 dark:border-gray-600'
           )}
         />
         {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
@@ -171,7 +171,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
               'w-full pl-8 pr-4 py-3 rounded-xl border text-right text-lg font-semibold',
               'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
               'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
-              errors.amount ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
+              errors.amount ? 'border-red-300 dark:border-red-600' : 'border-cream-200 dark:border-gray-600'
             )}
           />
         </div>
@@ -194,7 +194,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                     'flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
                     mainCategory === cat
                       ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
-                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
+                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-cream-100 dark:hover:bg-gray-600'
                   )}
                 >
                   <span className="text-xl">{m?.icon ?? '📦'}</span>
@@ -220,7 +220,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                   'px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 border',
                   subCategory === sub
                     ? 'bg-primary-500 text-white border-primary-500'
-                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400'
+                    : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 border-cream-200 dark:border-gray-600 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400'
                 )}
               >
                 {sub}
@@ -243,7 +243,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                 'flex-1 py-2 rounded-xl text-sm font-medium transition-all border',
                 period === p
                   ? 'bg-primary-500 text-white border-primary-500'
-                  : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600'
+                  : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-cream-200 dark:border-gray-600'
               )}
             >
               {p === 'monthly' ? '매월' : '매년'}
@@ -260,7 +260,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
             <select
               value={monthOfYear}
               onChange={(e) => setMonthOfYear(e.target.value)}
-              className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+              className="flex-1 px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
             >
               {MONTHS.map((m, i) => (
                 <option key={i + 1} value={i + 1}>{m}</option>
@@ -270,7 +270,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
           <select
             value={dayOfMonth}
             onChange={(e) => setDayOfMonth(e.target.value)}
-            className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+            className="flex-1 px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
           >
             {DAYS.map((d) => (
               <option key={d} value={d}>{d}일</option>
@@ -293,7 +293,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
                   'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium border transition-all',
                   paymentMethod === m.value
                     ? 'bg-primary-500 text-white border-primary-500'
-                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600'
+                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-cream-200 dark:border-gray-600'
                 )}
               >
                 <span>{m.icon}</span>
@@ -305,7 +305,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
             <select
               value={cardAccountId}
               onChange={(e) => setCardAccountId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+              className="w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
             >
               <option value="">연동 안함</option>
               {accounts.map((a) => (
@@ -325,7 +325,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
           <select
             value={cardAccountId}
             onChange={(e) => setCardAccountId(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+            className="w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
           >
             <option value="">연동 안함</option>
             {accounts.filter((a) => !a.isLiability).map((a) => (
@@ -351,7 +351,7 @@ export function RecurringForm({ initial, onSubmit, onCancel, onDelete }: Recurri
           onChange={(e) => setMemo(e.target.value)}
           placeholder="간단한 메모 (선택)"
           maxLength={100}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow"
+          className="w-full px-4 py-3 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow"
         />
       </div>
 

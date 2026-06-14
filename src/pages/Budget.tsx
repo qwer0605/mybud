@@ -59,10 +59,10 @@ export function Budget() {
       />
 
       {/* 월 선택 */}
-      <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-3xl p-4 border border-gray-100 dark:border-gray-700">
+      <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-3xl p-4 border border-cream-200 dark:border-gray-800">
         <button
           onClick={() => changeMonth(-1)}
-          className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
+          className="p-2 rounded-xl hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -74,7 +74,7 @@ export function Budget() {
         <button
           onClick={() => changeMonth(1)}
           disabled={isCurrentMonth}
-          className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30"
+          className="p-2 rounded-xl hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400 disabled:opacity-30"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -105,7 +105,7 @@ export function Budget() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-base font-semibold text-gray-900 dark:text-white">전체 예산 현황</h3>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                      <p className="font-num text-2xl font-bold text-gray-900 dark:text-white mt-1">
                         {formatCurrency(totalSpent)}
                         <span className="text-sm font-normal text-gray-400 dark:text-gray-500">
                           {' '}/ {formatCurrency(totalBudget)}
@@ -120,23 +120,23 @@ export function Budget() {
                   </div>
                   <ProgressBar percentage={overallPercentage} />
                   <div className="flex justify-between mt-2 text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">{overallPercentage}% 사용</span>
-                    <span className={clsx('font-medium', isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300')}>
+                    <span className="font-num text-gray-500 dark:text-gray-400">{overallPercentage}% 사용</span>
+                    <span className={clsx('font-num font-medium', isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300')}>
                       {isOverBudget ? `₩${Math.abs(totalRemaining).toLocaleString()} 초과` : `₩${totalRemaining.toLocaleString()} 남음`}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-cream-200 dark:border-gray-700">
                     <div className="text-center">
                       <p className="text-xs text-gray-500 dark:text-gray-400">설정 예산</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white mt-0.5">{formatCurrency(totalBudget)}</p>
+                      <p className="font-num text-sm font-semibold text-gray-900 dark:text-white mt-0.5">{formatCurrency(totalBudget)}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-gray-500 dark:text-gray-400">실제 지출</p>
-                      <p className="text-sm font-semibold text-red-600 dark:text-red-400 mt-0.5">{formatCurrency(totalSpent)}</p>
+                      <p className="font-num text-sm font-semibold text-red-600 dark:text-red-400 mt-0.5">{formatCurrency(totalSpent)}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-gray-500 dark:text-gray-400">{isOverBudget ? '초과 금액' : '남은 예산'}</p>
-                      <p className={clsx('text-sm font-semibold mt-0.5', isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
+                      <p className={clsx('font-num text-sm font-semibold mt-0.5', isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400')}>
                         {formatCurrency(Math.abs(totalRemaining))}
                       </p>
                     </div>

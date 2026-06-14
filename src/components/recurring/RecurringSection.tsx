@@ -59,7 +59,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-900 rounded-3xl border border-cream-200 dark:border-gray-800 overflow-hidden">
       {/* 헤더 */}
       <button
         type="button"
@@ -75,7 +75,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
             고정비
           </span>
           {recurring.length > 0 && (
-            <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-cream-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
               {relevantItems.length}개
             </span>
           )}
@@ -104,7 +104,7 @@ export function RecurringSection({ yearMonth }: RecurringSectionProps) {
       </button>
 
       {isExpanded && (
-        <div className="border-t border-gray-100 dark:border-gray-700">
+        <div className="border-t border-cream-200 dark:border-gray-700">
           {recurring.length === 0 ? (
             /* 항목 없음 */
             <div className="px-4 py-6 text-center">
@@ -269,7 +269,7 @@ function RecurringItem({ item, isRegistered, onEdit, onToggle }: RecurringItemPr
           'flex-shrink-0 text-xs px-2 py-0.5 rounded-full font-medium',
           isRegistered
             ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+            : 'bg-cream-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
         )}
       >
         {isRegistered ? '등록됨' : '미등록'}

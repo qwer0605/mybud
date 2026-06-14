@@ -2,6 +2,7 @@ import type { BudgetProgressItem } from '@/hooks/useBudgetProgress'
 import { EXPENSE_MAIN_CATEGORY_META } from '@/utils/constants'
 import { formatCurrency } from '@/utils/formatters'
 import { ProgressBar } from '@/components/ui/ProgressBar'
+import { CategoryCoin } from '@/components/ui/CategoryCoin'
 import clsx from 'clsx'
 
 interface BudgetProgressCardProps {
@@ -14,10 +15,10 @@ export function BudgetProgressCard({ item }: BudgetProgressCardProps) {
   if (item.budgeted === 0) return null
 
   return (
-    <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 space-y-2.5">
+    <div className="p-4 rounded-xl bg-cream-100 dark:bg-gray-700/50 space-y-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-lg">{meta?.icon ?? '📦'}</span>
+          <CategoryCoin color={meta?.color ?? '#94908A'} emoji={meta?.icon ?? '📦'} size={32} />
           <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
             {item.mainCategory}
           </span>
@@ -30,7 +31,7 @@ export function BudgetProgressCard({ item }: BudgetProgressCardProps) {
         <div className="text-right">
           <span
             className={clsx(
-              'text-sm font-semibold',
+              'font-num text-sm font-semibold',
               item.isOverBudget
                 ? 'text-red-600 dark:text-red-400'
                 : 'text-gray-800 dark:text-gray-200'
@@ -38,7 +39,7 @@ export function BudgetProgressCard({ item }: BudgetProgressCardProps) {
           >
             {formatCurrency(item.spent)}
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">
+          <span className="font-num text-xs text-gray-400 dark:text-gray-500">
             {' '}/ {formatCurrency(item.budgeted)}
           </span>
         </div>
@@ -48,7 +49,7 @@ export function BudgetProgressCard({ item }: BudgetProgressCardProps) {
 
       <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
         <span>{item.percentage}% 사용</span>
-        <span>
+        <span className="font-num">
           {item.remaining >= 0
             ? `₩${item.remaining.toLocaleString()} 남음`
             : `₩${Math.abs(item.remaining).toLocaleString()} 초과`}

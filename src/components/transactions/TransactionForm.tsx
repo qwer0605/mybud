@@ -4,6 +4,7 @@ import { useCategoryStore } from '@/store/categoryStore'
 import { useAssetStore } from '@/store/assetStore'
 import { getTodayString, formatAmountInput } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
+import { CategoryCoin } from '@/components/ui/CategoryCoin'
 import { CategoryMainEditor } from '@/components/categories/CategoryMainEditor'
 import { SubCategoryChips } from '@/components/categories/SubCategoryChips'
 import clsx from 'clsx'
@@ -13,6 +14,9 @@ const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: string }[] =
   { value: 'card',     label: '카드',    icon: '💳' },
   { value: 'transfer', label: '계좌이체', icon: '🏦' },
 ]
+
+// ─── 숫자패드 키 배열 (3×4) ───
+const NUMPAD_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'del'] as const
 
 // ─── 유형·결제수단에 맞는 기본 계좌 ID 반환 ───
 function getDefaultAccountId(
@@ -136,6 +140,18 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
     onSubmit({ type, amount, mainCategory, subCategory, memo, date, paymentMethod, cardAccountId, toAccountId })
   }
 
+  // 숫자패드 입력
+  const handleNumpadPress = (key: string) => {
+    if (key === 'del') {
+      setAmount((prev) => prev.slice(0, -1))
+      return
+    }
+    setAmount((prev) => {
+      const next = (prev + key).replace(/^0+(?=\d)/, '')
+      return next.length > 13 ? prev : next
+    })
+  }
+
   const currentSubCategories = categoryTree[mainCategory] ?? []
 
   // 현재 연결된 계좌 정보
@@ -144,7 +160,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* 수입/지출 선택 */}
-      <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-700 rounded-xl">
+      <div className="flex gap-2 p-1 bg-[#F4F1E9] dark:bg-gray-700 rounded-xl">
         {(['expense', 'income'] as const).map((t) => (
           <button
             key={t}
@@ -154,9 +170,9 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
               'flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-150',
               type === t
                 ? t === 'income'
-                  ? 'bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm'
-                  : 'bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400'
+                  ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm'
+                  : 'bg-white dark:bg-gray-800 text-[#F0524B] shadow-sm'
+                : 'text-ink-muted dark:text-gray-400'
             )}
           >
             {t === 'income' ? '수입' : '지출'}
@@ -164,28 +180,27 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
         ))}
       </div>
 
-      {/* 금액 */}
+      {/* 금액 표시 + 숫자패드 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-          금액 <span className="text-red-500">*</span>
-        </label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₩</span>
-          <input
-            type="text"
-            inputMode="numeric"
-            value={formatAmountInput(amount)}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ''))}
-            placeholder="0"
-            className={clsx(
-              'w-full pl-8 pr-4 py-3 rounded-xl border text-right text-lg font-semibold',
-              'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-              'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
-              errors.amount ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
-            )}
-          />
+        <div className="text-center py-3">
+          <p className="font-num text-5xl font-bold text-ink dark:text-white tracking-tight">
+            <span className="text-2xl align-top mr-1">₩</span>
+            {amount ? formatAmountInput(amount) : '0'}
+          </p>
+          {errors.amount && <p className="mt-2 text-xs text-[#F0524B]">{errors.amount}</p>}
         </div>
-        {errors.amount && <p className="mt-1 text-xs text-red-500">{errors.amount}</p>}
+        <div className="grid grid-cols-3 gap-2">
+          {NUMPAD_KEYS.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => handleNumpadPress(key)}
+              className="py-3.5 rounded-xl text-lg font-semibold font-num bg-[#F4F1E9] dark:bg-gray-700 text-ink dark:text-white hover:bg-[#EAE6DC] dark:hover:bg-gray-600 active:scale-[0.97] transition-all"
+            >
+              {key === 'del' ? '⌫' : key}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 날짜 */}
@@ -201,7 +216,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
             'w-full px-4 py-3 rounded-xl border',
             'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
             'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
-            errors.date ? 'border-red-300 dark:border-red-600' : 'border-gray-200 dark:border-gray-600'
+            errors.date ? 'border-red-300 dark:border-red-600' : 'border-cream-200 dark:border-gray-600'
           )}
         />
         {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
@@ -216,36 +231,45 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           onChange={(e) => setMemo(e.target.value)}
           placeholder="간단한 메모를 입력하세요"
           maxLength={100}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow"
+          className="w-full px-4 py-3 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow"
         />
       </div>
 
       {/* 대분류 선택 */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">대분류</label>
-        <div className="grid grid-cols-4 gap-2">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">대분류</label>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
           {mainCategories.map((cat) => {
             const m = mainCategoryMeta[cat]
+            const active = mainCategory === cat
             return (
-              <div key={cat} className="relative">
+              <div key={cat} className="relative flex-shrink-0 w-16">
                 <button
                   type="button"
                   onClick={() => handleMainCategoryChange(cat)}
-                  className={clsx(
-                    'w-full flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150',
-                    mainCategory === cat
-                      ? 'ring-2 ring-primary-400 bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300'
-                      : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'
-                  )}
+                  className="w-full flex flex-col items-center gap-1.5"
                 >
-                  <span className="text-xl">{m?.icon ?? '📦'}</span>
-                  <span className="leading-tight text-center break-keep">{cat}</span>
+                  <CategoryCoin
+                    color={m?.color ?? '#94908A'}
+                    emoji={m?.icon ?? '📦'}
+                    size={52}
+                    className={clsx(
+                      'transition-all duration-150',
+                      active && 'ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-800'
+                    )}
+                  />
+                  <span className={clsx(
+                    'block w-full text-xs font-medium leading-tight text-center break-keep',
+                    active ? 'text-primary-600 dark:text-primary-400' : 'text-ink-2 dark:text-gray-400'
+                  )}>
+                    {cat}
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => { setEditingMainCat(cat); setMainEditorOpen(true) }}
                   title="수정"
-                  className="absolute -top-1.5 -right-1.5 w-5 h-5 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-400 hover:text-primary-500 shadow-sm transition-colors"
+                  className="absolute -top-1 right-0 w-5 h-5 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 border border-[#EAE6DC] dark:border-gray-600 text-gray-400 hover:text-primary-500 shadow-sm transition-colors"
                 >
                   <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
@@ -260,10 +284,12 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           <button
             type="button"
             onClick={() => { setEditingMainCat(null); setMainEditorOpen(true) }}
-            className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl text-xs font-medium border-2 border-dashed border-primary-300 dark:border-primary-700 text-primary-500 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16"
           >
-            <span className="text-xl">+</span>
-            <span>대분류 추가</span>
+            <div className="w-[52px] h-[52px] rounded-[18px] border-2 border-dashed border-primary-300 dark:border-primary-700 flex items-center justify-center text-primary-500 dark:text-primary-400 text-xl">
+              +
+            </div>
+            <span className="block w-full text-xs font-medium text-primary-500 dark:text-primary-400 text-center break-keep">추가</span>
           </button>
         </div>
 
@@ -303,6 +329,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
             type={type}
             mainCategory={mainCategory}
             subs={currentSubCategories}
+            color={mainCategoryMeta[mainCategory]?.color}
             selectable
             selectedSub={subCategory}
             onSelect={setSubCategory}
@@ -335,7 +362,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
                   'flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium border transition-all',
                   paymentMethod === m.value
                     ? 'bg-primary-500 text-white border-primary-500'
-                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600 hover:border-primary-400'
+                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-cream-200 dark:border-gray-600 hover:border-primary-400'
                 )}
               >
                 <span>{m.icon}</span>
@@ -414,7 +441,7 @@ function AccountSelector({ accounts, value, onChange, hint, hintColor = 'blue' }
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
+        className="w-full px-3 py-2.5 rounded-xl border border-cream-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-400"
       >
         <option value="">연동 안함</option>
         {accounts.map((a) => (

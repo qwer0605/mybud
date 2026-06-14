@@ -39,7 +39,7 @@ export function BalanceLineChart({ data }: BalanceLineChartProps) {
         />
         <YAxis
           tickFormatter={formatAxisAmount}
-          tick={{ fontSize: 11, fill: '#9ca3af' }}
+          tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: "'Space Grotesk', sans-serif" }}
           axisLine={false}
           tickLine={false}
           width={45}
@@ -47,19 +47,20 @@ export function BalanceLineChart({ data }: BalanceLineChartProps) {
         <Tooltip
           formatter={(value: number) => [`₩${value.toLocaleString('ko-KR')}`, '잔액']}
           labelStyle={{ fontSize: 12, fontWeight: 600, color: '#374151' }}
+          itemStyle={{ fontFamily: "'Space Grotesk', sans-serif" }}
           contentStyle={{
             borderRadius: '12px',
             border: '1px solid #e5e7eb',
             boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
           }}
         />
-        <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="4 4" strokeOpacity={0.5} />
+        <ReferenceLine y={0} stroke="#F0524B" strokeDasharray="4 4" strokeOpacity={0.5} />
         <Line
           type="monotone"
           dataKey="잔액"
-          stroke="#f97316"
+          stroke="#10C57C"
           strokeWidth={2.5}
-          dot={{ fill: '#f97316', r: 4, strokeWidth: 2, stroke: '#fff' }}
+          dot={{ fill: '#10C57C', r: 4, strokeWidth: 2, stroke: '#fff' }}
           activeDot={{ r: 6 }}
         />
       </LineChart>

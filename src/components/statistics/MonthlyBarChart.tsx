@@ -44,7 +44,7 @@ export function MonthlyBarChart({ data }: MonthlyBarChartProps) {
         />
         <YAxis
           tickFormatter={formatAxisAmount}
-          tick={{ fontSize: 11, fill: '#9ca3af' }}
+          tick={{ fontSize: 11, fill: '#9ca3af', fontFamily: "'Space Grotesk', sans-serif" }}
           axisLine={false}
           tickLine={false}
           width={45}
@@ -55,6 +55,7 @@ export function MonthlyBarChart({ data }: MonthlyBarChartProps) {
             name,
           ]}
           labelStyle={{ fontSize: 12, fontWeight: 600, color: '#374151' }}
+          itemStyle={{ fontFamily: "'Space Grotesk', sans-serif" }}
           contentStyle={{
             borderRadius: '12px',
             border: '1px solid #e5e7eb',
@@ -66,8 +67,8 @@ export function MonthlyBarChart({ data }: MonthlyBarChartProps) {
           iconType="circle"
           iconSize={8}
         />
-        <Bar dataKey="수입" fill="#22c55e" radius={[6, 6, 0, 0]} maxBarSize={40} />
-        <Bar dataKey="지출" fill="#ef4444" radius={[6, 6, 0, 0]} maxBarSize={40} />
+        <Bar dataKey="수입" fill="#10C57C" radius={[6, 6, 0, 0]} maxBarSize={40} />
+        <Bar dataKey="지출" fill="#F0524B" radius={[6, 6, 0, 0]} maxBarSize={40} />
       </BarChart>
     </ResponsiveContainer>
   )

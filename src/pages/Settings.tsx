@@ -118,7 +118,7 @@ export function Settings() {
       </div>
 
       {/* 탭 */}
-      <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+      <div className="flex gap-2 p-1 bg-cream-100 dark:bg-gray-800 rounded-xl">
         {(['expense', 'income'] as const).map((t) => (
           <button
             key={t}
@@ -165,7 +165,7 @@ export function Settings() {
           return (
             <div
               key={cat}
-              className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden"
+              className="bg-white dark:bg-gray-900 rounded-3xl border border-cream-200 dark:border-gray-800 overflow-hidden"
             >
               {/* 대분류 헤더 */}
               <div className="flex items-center gap-3 px-4 py-3">
@@ -173,7 +173,7 @@ export function Settings() {
                 <div
                   className={clsx(
                     'w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0',
-                    m?.bgColor ?? 'bg-gray-100 dark:bg-gray-700/50'
+                    m?.bgColor ?? 'bg-cream-100 dark:bg-gray-700/50'
                   )}
                 >
                   {m?.icon ?? '📦'}
@@ -192,7 +192,7 @@ export function Settings() {
                   {/* 확장/접기 */}
                   <button
                     onClick={() => setExpandedCat(isExpanded ? null : cat)}
-                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-cream-100 dark:hover:bg-gray-700 transition-colors"
                     title={isExpanded ? '접기' : '펼치기'}
                   >
                     <svg
@@ -220,7 +220,7 @@ export function Settings() {
               {/* 소분류 (확장 시) */}
               {isExpanded && (
                 <div className="px-4 pb-4 border-t border-gray-50 dark:border-gray-700/50 pt-3">
-                  <SubCategoryChips type={activeType} mainCategory={cat} subs={subs} />
+                  <SubCategoryChips type={activeType} mainCategory={cat} subs={subs} color={m?.color} />
                 </div>
               )}
             </div>
@@ -236,16 +236,16 @@ export function Settings() {
             resetToDefault()
             setExpandedCat(null)
           }}
-          className="w-full py-3 rounded-3xl border border-gray-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+          className="w-full py-3 rounded-3xl border border-cream-200 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
         >
           기본값으로 초기화
         </button>
       </div>
 
       {/* 데이터 관리 */}
-      <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
+      <div className="pt-2 border-t border-cream-200 dark:border-gray-800">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-3">데이터 관리</h2>
-        <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl border border-cream-200 dark:border-gray-800 divide-y divide-cream-200 dark:divide-gray-800">
           {/* 데이터 내보내기 */}
           <button
             onClick={exportData}

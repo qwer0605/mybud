@@ -84,7 +84,7 @@ export function SortableWidget({ id, pageId, visible, isEditing, children }: Sor
         {visible && children != null ? (
           children
         ) : (
-          <div className="bg-white dark:bg-gray-800 p-5 text-center text-sm text-gray-400 dark:text-gray-500">
+          <div className="bg-white dark:bg-gray-900 p-5 text-center text-sm text-gray-400 dark:text-gray-500">
             {!visible ? '숨겨진 위젯 · 눈 아이콘을 눌러 다시 표시' : '현재 내용 없음'}
           </div>
         )}
