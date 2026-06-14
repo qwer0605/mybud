@@ -4,6 +4,7 @@ import { useCategoryStore } from '@/store/categoryStore'
 import { useAssetStore } from '@/store/assetStore'
 import { getTodayString, formatAmountInput } from '@/utils/formatters'
 import { Button } from '@/components/ui/Button'
+import { DatePicker } from '@/components/ui/DatePicker'
 import { CategoryCoin } from '@/components/ui/CategoryCoin'
 import { CategoryMainEditor } from '@/components/categories/CategoryMainEditor'
 import { SubCategoryChips } from '@/components/categories/SubCategoryChips'
@@ -152,6 +153,12 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
     })
   }
 
+  // 키보드 직접 입력
+  const handleAmountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, '')
+    setAmount(digits.slice(0, 13))
+  }
+
   const currentSubCategories = categoryTree[mainCategory] ?? []
 
   // 현재 연결된 계좌 정보
@@ -183,10 +190,17 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
       {/* 금액 표시 + 숫자패드 */}
       <div>
         <div className="text-center py-3">
-          <p className="font-num text-5xl font-bold text-ink dark:text-white tracking-tight">
-            <span className="text-2xl align-top mr-1">₩</span>
-            {amount ? formatAmountInput(amount) : '0'}
-          </p>
+          <div className="flex items-end justify-center gap-1">
+            <span className="text-2xl font-bold text-ink dark:text-white mb-1.5">₩</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={amount ? formatAmountInput(amount) : ''}
+              onChange={handleAmountInput}
+              placeholder="0"
+              className="font-num text-5xl font-bold text-ink dark:text-white tracking-tight bg-transparent text-center outline-none w-full max-w-[260px]"
+            />
+          </div>
           {errors.amount && <p className="mt-2 text-xs text-[#F0524B]">{errors.amount}</p>}
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -208,17 +222,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
           날짜 <span className="text-red-500">*</span>
         </label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className={clsx(
-            'w-full px-4 py-3 rounded-xl border',
-            'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
-            'focus:outline-none focus:ring-2 focus:ring-primary-400 transition-shadow',
-            errors.date ? 'border-red-300 dark:border-red-600' : 'border-cream-200 dark:border-gray-600'
-          )}
-        />
+        <DatePicker value={date} onChange={setDate} error={!!errors.date} />
         {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date}</p>}
       </div>
 
@@ -238,12 +242,12 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
       {/* 대분류 선택 */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">대분류</label>
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-1">
+        <div className="grid grid-cols-4 gap-x-2 gap-y-4 justify-items-center">
           {mainCategories.map((cat) => {
             const m = mainCategoryMeta[cat]
             const active = mainCategory === cat
             return (
-              <div key={cat} className="relative flex-shrink-0 w-16">
+              <div key={cat} className="relative w-16">
                 <button
                   type="button"
                   onClick={() => handleMainCategoryChange(cat)}
@@ -284,7 +288,7 @@ export function TransactionForm({ initial, onSubmit, onCancel }: TransactionForm
           <button
             type="button"
             onClick={() => { setEditingMainCat(null); setMainEditorOpen(true) }}
-            className="flex flex-col items-center gap-1.5 flex-shrink-0 w-16"
+            className="flex flex-col items-center gap-1.5 w-16"
           >
             <div className="w-[52px] h-[52px] rounded-[18px] border-2 border-dashed border-primary-300 dark:border-primary-700 flex items-center justify-center text-primary-500 dark:text-primary-400 text-xl">
               +
