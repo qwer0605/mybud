@@ -200,6 +200,7 @@ export async function deleteProfileDataFromFirestore(uid: string, profileId: str
     await batch.commit()
   } catch (err) {
     console.warn('[Sync] deleteProfileDataFromFirestore error:', err)
+    throw err
   }
 }
 
@@ -267,5 +268,27 @@ export async function uploadToFirestore(uid: string, profiles: Profile[]): Promi
     await batch.commit()
   } catch (err) {
     console.warn('[Sync] uploadToFirestore error:', err)
+  }
+}
+
+// ───── 복원: 단일 프로필의 localStorage 데이터를 Firestore에 업로드 ─────
+export async function uploadProfileToFirestore(uid: string, profileId: string): Promise<void> {
+  if (!isFirebaseConfigured || !db) return
+  try {
+    const batch = writeBatch(db)
+    const types: SyncType[] = ['transactions', 'budgets', 'assets']
+    for (const type of types) {
+      const raw = localStorage.getItem(getProfileStorageKey(profileId, type))
+      if (!raw) continue
+      const items = JSON.parse(raw) as Array<{ id: string }>
+      for (const item of items) {
+        const ref = doc(profileDataCol(uid, profileId, type), item.id)
+        batch.set(ref, item as Record<string, unknown>)
+      }
+    }
+    await batch.commit()
+  } catch (err) {
+    console.warn('[Sync] uploadProfileToFirestore error:', err)
+    throw err
   }
 }

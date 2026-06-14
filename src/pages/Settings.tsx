@@ -5,6 +5,9 @@ import { CategoryMainEditor } from '@/components/categories/CategoryMainEditor'
 import { SubCategoryChips } from '@/components/categories/SubCategoryChips'
 import { getActiveProfileId, getProfileStorageKey, PROFILE_STORAGE_KEY } from '@/utils/constants'
 import { AppVersion } from '@/components/layout/AppVersion'
+import { deleteProfileDataFromFirestore, uploadProfileToFirestore, syncProfileList, unsubscribeRealtime } from '@/firebase/syncService'
+import { getCurrentUid } from '@/store/authStore'
+import { isFirebaseConfigured } from '@/firebase/config'
 import clsx from 'clsx'
 
 // ─── 데이터 내보내기 ─────────────────────────────────────────
@@ -45,7 +48,7 @@ function exportData() {
 // ─── 데이터 가져오기(복원) ───────────────────────────────────
 function importData(file: File, onDone: () => void) {
   const reader = new FileReader()
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const data = JSON.parse(e.target?.result as string)
       if (!data || typeof data !== 'object') throw new Error('invalid backup file')
@@ -57,8 +60,10 @@ function importData(file: File, onDone: () => void) {
         return
       }
 
-      if (Array.isArray(data.profiles) && data.profiles.length > 0) {
-        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(data.profiles))
+      const restoredProfiles = Array.isArray(data.profiles) && data.profiles.length > 0 ? data.profiles : null
+
+      if (restoredProfiles) {
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(restoredProfiles))
       }
       if (Array.isArray(data.transactions)) {
         localStorage.setItem(getProfileStorageKey(profileId, 'transactions'), JSON.stringify(data.transactions))
@@ -70,7 +75,29 @@ function importData(file: File, onDone: () => void) {
         localStorage.setItem(getProfileStorageKey(profileId, 'assets'), JSON.stringify(data.assets))
       }
 
-      alert('데이터를 복원했습니다.')
+      // 로그인 상태라면 복원한 데이터를 Firestore에도 반영 → 새로고침 시
+      // downloadFromFirestore가 예전(복원 전) 클라우드 데이터로 덮어쓰는 것을 방지
+      const uid = getCurrentUid()
+      let cloudSyncFailed = false
+      if (isFirebaseConfigured && uid) {
+        try {
+          unsubscribeRealtime()
+          await deleteProfileDataFromFirestore(uid, profileId)
+          await uploadProfileToFirestore(uid, profileId)
+          if (restoredProfiles) {
+            await syncProfileList(uid, restoredProfiles)
+          }
+        } catch (cloudErr) {
+          console.error('[Restore] cloud sync error:', cloudErr)
+          cloudSyncFailed = true
+        }
+      }
+
+      if (cloudSyncFailed) {
+        alert('데이터를 로컬에 복원했지만 클라우드 동기화에는 실패했습니다.\n온라인 상태에서 다시 시도해주세요.')
+      } else {
+        alert('데이터를 복원했습니다.')
+      }
       window.location.reload()
     } catch (err) {
       alert('복원 중 오류가 발생했습니다. 올바른 백업 파일인지 확인해주세요.')
